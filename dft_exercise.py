@@ -85,7 +85,7 @@ plt.legend()
 plt.show()
 
 # ==========================================
-# ✨ Extension (Optional):
+#  Extension (Optional):
 # - Normalize the spectra (divide by max value)
 # - Zoom into a specific wavenumber range (e.g., plt.xlim(1800, 800))
 # - Try with other sample files (e.g., AB)
