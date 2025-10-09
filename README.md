@@ -1,6 +1,28 @@
 # IR Spectroscopy Data Analysis
 
-This project is a guided exercise for analyzing IR spectroscopy data using Python. It helps you load interferogram data, visualize signals, compute Fourier transforms, and compare sample spectra.
+This project guides you through the process of analyzing infrared (IR) spectroscopy data using Python. You will learn how to load interferogram data, visualize signals, perform Fourier transforms, and interpret sample spectra.
+
+---
+
+## 🧑‍🔬 Background
+
+**IR Spectroscopy** is a powerful technique for identifying molecular structures.  
+The raw data from an IR spectrometer is an *interferogram*, a signal that must be transformed to reveal the spectrum.
+
+## How Does an FT-IR Spectrometer Work?
+An IR spectrometer uses a Michelson interferometer to split and recombine infrared light.
+A moving mirror creates varying optical path differences, causing constructive and destructive interference for different wavelengths.
+As the mirror moves, the detector records the resulting signal, called the interferogram, which contains information from all IR wavelengths at once.
+To extract the spectrum, a Fourier Transform is applied to the interferogram, converting it from the time (or path difference) domain to the frequency (wavenumber) domain.
+
+### What is the "Zero Burst"?
+
+The **zero burst** is the point of maximum signal in the interferogram, corresponding to zero optical path difference in the interferometer.  
+This region contains the most useful spectral information.  
+By extracting a window around the zero burst before the Fourier Transform, you improve spectral resolution and reduce noise.  
+After the FFT, only the positive half of the spectrum (wavenumbers) is physically meaningful for IR, so we plot just that half to obtain a clean, interpretable IR spectrum.
+
+---
 
 ## What You Need
 
