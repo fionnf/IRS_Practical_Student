@@ -120,9 +120,21 @@ resolution).
 
 ### 5. `exercise5_simulation.py` — build a spectrometer *(experimental)*
 Run the physics **backwards**: turn a known spectrum into an interferogram, then
-recover it. Use your simulator to see **why co-adding scans improves signal-to-
-noise as √n**, and build a **Beer–Lambert calibration curve** to measure an
-"unknown" concentration. Needs **no** instrument data — you generate everything.
+recover it. Six parts:
+**A** forward model, **B** round trip, **C** signal averaging (why noise falls
+as √n), **D** Beer–Lambert calibration curve + unknown concentration,
+**E** deconvolve two overlapping bands with non-linear least squares
+(`scipy.optimize.curve_fit`), **F** Monte Carlo uncertainty — turn a single
+concentration estimate into an actual confidence interval. Needs **no**
+instrument data — you generate everything.
+
+### 6. `exercise6_mixture_unmixing.py` — quantify a real mixture *(experimental)*
+Uses **your own measured data** from the xylene-isomer mixture case (Section D
+of the lab manual): two pure-isomer spectra and a series of known binary
+mixtures. Implements **classical least-squares spectral unmixing** — solve
+`A_mixture ≈ x1·A_pure1 + x2·A_pure2` for the mole fractions directly from the
+spectrum (no peak-picking) — and uses the reconstruction residual to give a
+*quantitative*, not just qualitative, answer to whether the mixture is ideal.
 
 > `dft_example.R` is an optional R version of the core workflow. It is provided
 > as-is; teaching assistants support **Python** only.
@@ -139,9 +151,13 @@ key figures. A good report:
 - gives a peak-assignment table with functional groups (Exercise 3);
 - shows the resolution / apodization / zero-filling comparisons and explains the
   trade-offs in your own words (Exercise 4);
-- shows the √n signal-averaging plot and the calibration curve, and states your
-  measured "unknown" concentration with a comment on its reliability
-  (Exercise 5).
+- shows the √n signal-averaging plot and the calibration curve, states your
+  measured "unknown" concentration, shows the two-band deconvolution fit with
+  parameter uncertainties, and reports a proper confidence interval (not just a
+  point estimate) from the Monte Carlo run (Exercise 5);
+- shows the parity plot (fitted vs true mole fraction) and residual spectrum
+  for the mixture unmixing, and gives a quantitative verdict — with numbers —
+  on whether the xylene mixture is ideal (Exercise 6).
 
 ## Tips & troubleshooting
 
