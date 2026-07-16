@@ -1,1 +1,15 @@
 /Worked
+
+# Generated / instrument data (each student provides or generates their own)
+*.dpt
+
+# Figures exported while working
+*.png
+*.pdf
+*.svg
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
