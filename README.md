@@ -66,10 +66,13 @@ concentration (Beer–Lambert law).
    pip install -r requirements.txt
    ```
 3. **Get data.** If you have the real `.dpt` files, drop them in the project
-   folder. Otherwise generate realistic practice data:
+   folder. Otherwise generate realistic practice data **with your team number**:
    ```bash
-   python generate_demo_data.py
+   python generate_demo_data.py --team 16
    ```
+   Every team's practice data differs (different noise, different zero-burst
+   position), so your Section 0 answers are your own. Omit `--team` for the
+   generic default set.
    This writes `background_*.dpt` and `ethanol_*.dpt`. (The synthetic "ethanol"
    is a caricature — good for learning the analysis, not for quoting real band
    values.)
@@ -169,6 +172,18 @@ molecule, diagonalise to get frequencies *and* eigenvectors, then invert the
 problem to extract both force constants from your measured spectrum — which
 resolves the ~7% discrepancy Section F deliberately leaves hanging as a real,
 small stretch–stretch interaction constant rather than experimental error.
+
+### Per-team assignments — `team_setup.py`
+Each team gets a different combination of samples, bands, analysis windows and
+molecules, derived deterministically from the team number:
+```bash
+python team_setup.py 16            # your assignment sheet
+python team_setup.py --all 1 24    # instructors: every team at once
+python team_setup.py 16 --key      # instructors: sheet + marking key
+python team_setup.py --check 1 24  # instructors: audit the spread
+```
+Nothing is random at run time — the same team number always gives the same
+sheet, on any machine, so an assignment can be regenerated at marking time.
 
 > `dft_example.R` is an optional R version of the core workflow. It is provided
 > as-is; teaching assistants support **Python** only.
