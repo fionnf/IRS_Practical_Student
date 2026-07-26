@@ -58,18 +58,10 @@ def absorbance(wn, bands):
     return A
 
 
-def spectrum_to_interferogram(single_beam, rng, noise=2e-3, burst_shift=0):
-    """One-sided spectrum -> real interferogram with noise.
-
-    ``burst_shift`` moves the centre burst away from the midpoint. A real
-    single-sided acquisition never has its burst exactly at the centre, and
-    giving each team a different offset means no two teams share a zero-burst
-    index -- see team_setup.py.
-    """
+def spectrum_to_interferogram(single_beam, rng, noise=2e-3):
+    """One-sided spectrum -> real, centre-bursted interferogram with noise."""
     ifg = np.fft.irfft(single_beam, n=M)
-    ifg = np.fft.fftshift(ifg)                 # burst to the middle
-    if burst_shift:
-        ifg = np.roll(ifg, int(burst_shift))
+    ifg = np.fft.fftshift(ifg)                 # put the centre burst in the middle
     ifg = ifg + rng.normal(0, noise * ifg.max(), size=ifg.shape)
     return ifg
 
@@ -191,35 +183,22 @@ def polymer_spectrum(wn, name):
     return absorbance(wn, POLYMER_BANDS[name])
 
 
-def main(team=None):
-    """Write the practice data set. ``team`` makes it specific to one team."""
-    if team is None:
-        seed, burst_shift, tag = 42, 0, "default"
-    else:
-        # hash first: nearby integer seeds otherwise give correlated draws
-        import hashlib as _hl
-        _d = _hl.sha256(f"IRS-demo-team-{int(team)}".encode()).digest()
-        seed = int.from_bytes(_d[:8], "big")
-        # a reproducible per-team offset, a few thousand points either way
-        burst_shift = int(np.random.default_rng(seed).integers(-4000, 4001))
-        tag = f"team {team}"
-    rng = np.random.default_rng(seed)
-    print(f"Generating practice data for: {tag}"
-          + (f"  (burst offset {burst_shift:+d} points)" if team is not None else ""))
+def main():
+    rng = np.random.default_rng(42)
 
     # ---- Background: empty beam. Reference and sample are both just the
     #      source envelope with independent noise, so their ratio is ~1. ----
     b_ref_sb = ENVELOPE.copy()
     b_smp_sb = ENVELOPE.copy()
-    b_rifg = spectrum_to_interferogram(b_ref_sb, rng, burst_shift=burst_shift)
-    b_sifg = spectrum_to_interferogram(b_smp_sb, rng, burst_shift=burst_shift)
+    b_rifg = spectrum_to_interferogram(b_ref_sb, rng)
+    b_sifg = spectrum_to_interferogram(b_smp_sb, rng)
 
     # ---- Ethanol: sample beam is attenuated by Beer-Lambert transmittance. ----
     A = absorbance(WN_FULL, ETHANOL_BANDS)
     e_ref_sb = ENVELOPE.copy()
     e_smp_sb = ENVELOPE * 10.0 ** (-A)
-    e_rifg = spectrum_to_interferogram(e_ref_sb, rng, burst_shift=burst_shift)
-    e_sifg = spectrum_to_interferogram(e_smp_sb, rng, burst_shift=burst_shift)
+    e_rifg = spectrum_to_interferogram(e_ref_sb, rng)
+    e_sifg = spectrum_to_interferogram(e_smp_sb, rng)
 
     print("Writing synthetic .dpt files...")
     save_dpt("background_rifg.dpt", b_rifg)
@@ -262,9 +241,4 @@ def main(team=None):
 
 
 if __name__ == "__main__":
-    import argparse
-    _ap = argparse.ArgumentParser(description="Generate practice .dpt files.")
-    _ap.add_argument("--team", type=int, default=None,
-                     help="team number: gives your team its own practice data")
-    _args = _ap.parse_args()
-    main(team=_args.team)
+    main()
