@@ -6,11 +6,12 @@ Run this ONCE if you do not have real instrument data:
 
     python generate_demo_data.py
 
-It writes six files that behave like the real ones, so every exercise
-(1 through 4) runs end-to-end:
+It writes files that behave like the real ones, so every exercise runs
+end-to-end:
 
     background_rifg.dpt   background_sifg.dpt   background_ab.dpt
     ethanol_rifg.dpt      ethanol_sifg.dpt      ethanol_ab.dpt
+    hcl_gas_ab.dpt         (for exercise8_rovibrational.py)
 
 The "ethanol" here is a caricature with a few characteristic bands -- good
 enough to learn the data analysis, but do NOT quote these numbers as real
@@ -72,6 +73,73 @@ def save_dpt(path, y, x=None):
     print(f"  wrote {path}  ({len(y)} points)")
 
 
+# ---------------------------------------------------------------------------
+# Synthetic HCl gas-phase rovibrational spectrum, for exercise8_rovibrational.py
+# Built from real literature constants for H35Cl / H37Cl (not a caricature --
+# these are the accepted textbook values), so this is a reasonable stand-in
+# for your gas-cell data while you're waiting for lab time.
+# ---------------------------------------------------------------------------
+_C_CGS = 2.99792458e10       # cm/s
+_H = 6.62607015e-34          # J s
+_KB = 1.380649e-23           # J/K
+_U = 1.66053906660e-27       # kg per amu
+
+_M_H = 1.007825 * _U
+_M_CL35 = 34.968853 * _U
+_M_CL37 = 36.965903 * _U
+
+# Literature H35Cl constants (band origin, rotational constant, centrifugal
+# distortion). H37Cl constants below are then PREDICTED from these via the
+# isotope reduced-mass scaling -- exactly the calculation exercise8 asks you
+# to do yourself, so do not peek until you've derived it.
+_NU0_35 = 2885.9    # cm^-1
+_BE_35 = 10.5934    # cm^-1
+_DE_35 = 5.315e-4   # cm^-1
+_ABUNDANCE_35 = 0.7577
+_ABUNDANCE_37 = 0.2423
+
+
+def _isotope_scale(nu0, be, mu_ref, mu_new):
+    ratio = mu_ref / mu_new
+    return nu0 * np.sqrt(ratio), be * ratio
+
+
+def hcl_line_positions(nu0, be, de, j_max=9):
+    """Return (m, nu) for the P and R branch lines of a rovibrational band."""
+    m_vals, nus = [], []
+    for J in range(0, j_max):          # R branch, m = J+1
+        m = J + 1
+        m_vals.append(m)
+        nus.append(nu0 + 2 * be * m - 4 * de * m ** 3)
+    for J in range(1, j_max):          # P branch, m = -J
+        m = -J
+        m_vals.append(m)
+        nus.append(nu0 + 2 * be * m - 4 * de * m ** 3)
+    return np.array(m_vals), np.array(nus)
+
+
+def hcl_gas_spectrum(wn, T=298.0, linewidth=1.6):
+    """Synthetic natural-abundance HCl absorbance spectrum on grid `wn`."""
+    mu35 = _M_H * _M_CL35 / (_M_H + _M_CL35)
+    mu37 = _M_H * _M_CL37 / (_M_H + _M_CL37)
+    nu0_37, be_37 = _isotope_scale(_NU0_35, _BE_35, mu35, mu37)
+    de_37 = _DE_35 * (be_37 / _BE_35) ** 3   # De ~ Be^3 (Kratzer relation)
+
+    A = np.zeros_like(wn)
+    for nu0, be, de, abundance in [
+        (_NU0_35, _BE_35, _DE_35, _ABUNDANCE_35),
+        (nu0_37, be_37, de_37, _ABUNDANCE_37),
+    ]:
+        m_vals, nus = hcl_line_positions(nu0, be, de)
+        for m, nu in zip(m_vals, nus):
+            J = m - 1 if m > 0 else -m
+            pop = (2 * J + 1) * np.exp(-_H * _C_CGS * be * J * (J + 1) / (_KB * T))
+            A += abundance * pop * _gauss(wn, nu, 1.0, linewidth)
+
+    A = A / A.max() * 0.75   # rescale to a plausible peak absorbance
+    return A
+
+
 def main():
     rng = np.random.default_rng(42)
 
@@ -99,6 +167,11 @@ def main():
     m = (WN_FULL >= 500) & (WN_FULL <= 4000)
     save_dpt("ethanol_ab.dpt", A[m], x=WN_FULL[m])
     save_dpt("background_ab.dpt", np.zeros(m.sum()), x=WN_FULL[m])
+
+    # ---- Synthetic HCl gas-phase rovibrational spectrum (exercise 8). ----
+    wn_hcl = np.linspace(2600, 3150, 6000)
+    A_hcl = hcl_gas_spectrum(wn_hcl)
+    save_dpt("hcl_gas_ab.dpt", A_hcl, x=wn_hcl)
 
     print("\nDone. You can now run exercise1_interferogram.py")
 

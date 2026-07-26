@@ -136,6 +136,25 @@ mixtures. Implements **classical least-squares spectral unmixing** — solve
 spectrum (no peak-picking) — and uses the reconstruction residual to give a
 *quantitative*, not just qualitative, answer to whether the mixture is ideal.
 
+### 7. `exercise7_uncertainty.py` — error propagation and statistics
+A small, reusable toolkit you will use for the REST of the practical, not just
+this file: small-sample confidence intervals (Student's *t*, not a bare
+standard deviation), general error propagation (products, quotients, powers),
+linear regression with standard errors on the slope/intercept, and a
+two-sample *t*-test. Use it anywhere you quote an uncertainty in your report.
+
+### 8. `exercise8_rovibrational.py` — HCl/DCl rovibrational analysis
+The computational counterpart to Section E's gas-phase HCl work. Assigns P/R
+branch lines with a running index `m`, then fits
+`nu(m) = nu0 + 2*Be*m - 4*De*m**3` by multiple linear regression (including
+**centrifugal distortion**, not just the simple rigid-rotor line) to get
+`nu0`, `Be`, `De`, and — via `exercise7`'s uncertainty tools — a bond length
+`r_e` with a real, propagated error bar. Compares H35Cl vs H37Cl (and, on
+your own gas-cell data, HCl vs DCl) as a from-first-principles test of the
+Born-Oppenheimer approximation. Companion interactive tool: the
+**Rovibrational Spectrum Simulator** (linked from the lab manual) lets you
+explore the same `nu0`/`Be`/`De` space live before fitting real data.
+
 > `dft_example.R` is an optional R version of the core workflow. It is provided
 > as-is; teaching assistants support **Python** only.
 
@@ -157,7 +176,13 @@ key figures. A good report:
   point estimate) from the Monte Carlo run (Exercise 5);
 - shows the parity plot (fitted vs true mole fraction) and residual spectrum
   for the mixture unmixing, and gives a quantitative verdict — with numbers —
-  on whether the xylene mixture is ideal (Exercise 6).
+  on whether the xylene mixture is ideal (Exercise 6);
+- reports every physical constant elsewhere in your write-up (spring
+  constants, concentrations, mole fractions, bond lengths...) as a value
+  **with a propagated uncertainty**, using Exercise 7 (Exercise 7);
+- shows the P/R branch assignment, the 2-parameter vs 3-parameter (with
+  centrifugal distortion) regression comparison, and the HCl-vs-DCl bond
+  length consistency check (Exercise 8).
 
 ## Tips & troubleshooting
 
