@@ -155,6 +155,21 @@ Born-Oppenheimer approximation. Companion interactive tool: the
 **Rovibrational Spectrum Simulator** (linked from the lab manual) lets you
 explore the same `nu0`/`Be`/`De` space live before fitting real data.
 
+### 9. `exercise9_polymer_id.py` — how library matching really works
+The Section C companion. You implement the **hit quality index** that commercial
+FT-IR identification software computes internally (cosine similarity of
+baseline-removed, normalised spectra), then learn why a confident top hit can
+still be an incomplete answer: one of the two practice unknowns is a laminate,
+and only a **residual re-search** reveals its second layer. Also contains the
+Harrick **ATR penetration-depth** formula and the PE **crystallinity index**.
+
+### 10. `exercise10_normalmodes.py` — where frequencies come from
+The Section F companion. Build the Wilson **GF matrices** for a linear XY₂
+molecule, diagonalise to get frequencies *and* eigenvectors, then invert the
+problem to extract both force constants from your measured spectrum — which
+resolves the ~7% discrepancy Section F deliberately leaves hanging as a real,
+small stretch–stretch interaction constant rather than experimental error.
+
 > `dft_example.R` is an optional R version of the core workflow. It is provided
 > as-is; teaching assistants support **Python** only.
 

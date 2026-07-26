@@ -140,6 +140,49 @@ def hcl_gas_spectrum(wn, T=298.0, linewidth=1.6):
     return A
 
 
+# ---------------------------------------------------------------------------
+# Synthetic polymer reference spectra, for exercise9_polymer_id.py
+#
+# Band positions are approximately correct for each polymer (they are the
+# genuinely diagnostic ones a chemist would use), but the relative intensities
+# are simplified. Treat these as a TEACHING library for learning how library
+# matching works -- not as a substitute for a real commercial reference
+# library when identifying an actual unknown.
+# ---------------------------------------------------------------------------
+POLYMER_BANDS = {
+    # (centre cm^-1, height, FWHM cm^-1)
+    "PE": [
+        (2915, 0.90, 30), (2848, 0.75, 28),      # CH2 asym / sym stretch
+        (1463, 0.30, 22),                          # CH2 bend
+        (730, 0.22, 10), (720, 0.26, 10),         # CH2 rock doublet -> crystallinity
+    ],
+    "PS": [
+        (3082, 0.16, 14), (3060, 0.22, 14), (3025, 0.26, 14),  # aromatic C-H
+        (2920, 0.40, 26), (2850, 0.22, 26),                     # aliphatic C-H
+        (1601, 0.35, 14), (1583, 0.16, 12),
+        (1493, 0.42, 14), (1452, 0.45, 16),                     # ring modes
+        (756, 0.70, 12), (698, 0.85, 12),                       # monosubst. benzene
+    ],
+    "PET": [
+        (2960, 0.20, 26),
+        (1712, 1.00, 24),                          # ester C=O -- very strong
+        (1410, 0.25, 16), (1340, 0.28, 18),
+        (1240, 0.85, 24), (1090, 0.60, 22),        # C-O
+        (720, 0.45, 14),                            # aromatic
+    ],
+    "PVC": [
+        (2910, 0.40, 30), (2850, 0.22, 28),
+        (1425, 0.35, 18), (1330, 0.22, 16), (1250, 0.30, 18),
+        (690, 0.55, 20), (615, 0.60, 22),          # C-Cl stretch -- halogen tell
+    ],
+}
+
+
+def polymer_spectrum(wn, name):
+    """Absorbance spectrum of one reference polymer on grid `wn`."""
+    return absorbance(wn, POLYMER_BANDS[name])
+
+
 def main():
     rng = np.random.default_rng(42)
 
@@ -172,6 +215,27 @@ def main():
     wn_hcl = np.linspace(2600, 3150, 6000)
     A_hcl = hcl_gas_spectrum(wn_hcl)
     save_dpt("hcl_gas_ab.dpt", A_hcl, x=wn_hcl)
+
+    # ---- Polymer reference library + two unknowns (exercise 9). ----
+    wn_poly = np.linspace(600, 3200, 5200)
+    for name in POLYMER_BANDS:
+        A_poly = polymer_spectrum(wn_poly, name)
+        A_poly = A_poly + rng.normal(0, 2e-3, size=A_poly.shape)
+        save_dpt(f"polymer_ref_{name}.dpt", A_poly, x=wn_poly)
+
+    # Unknown 1: a single pure polymer, with a sloping baseline and extra noise
+    # (i.e. realistically messy, but genuinely one material).
+    unknown1 = polymer_spectrum(wn_poly, "PS")
+    unknown1 = unknown1 + 0.08 * (wn_poly - wn_poly.min()) / np.ptp(wn_poly)
+    unknown1 = unknown1 + rng.normal(0, 6e-3, size=unknown1.shape)
+    save_dpt("polymer_unknown_1.dpt", unknown1, x=wn_poly)
+
+    # Unknown 2: a LAMINATE -- two polymers superimposed. Deliberately included
+    # so that blind top-hit library matching gives a confident but INCOMPLETE
+    # answer (see exercise9, STEP 4).
+    unknown2 = 0.62 * polymer_spectrum(wn_poly, "PET") + 0.38 * polymer_spectrum(wn_poly, "PE")
+    unknown2 = unknown2 + rng.normal(0, 5e-3, size=unknown2.shape)
+    save_dpt("polymer_unknown_2.dpt", unknown2, x=wn_poly)
 
     print("\nDone. You can now run exercise1_interferogram.py")
 
