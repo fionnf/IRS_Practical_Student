@@ -13,13 +13,25 @@
 # copy the current working files into experiments/IRS and commit only that
 # path, leaving the rest of the course repo untouched.
 #
-# Usage:
-#     tools/publish_to_gitlab.sh                # sync + show diff, no push
-#     tools/publish_to_gitlab.sh --push         # sync, commit and push
-#     COURSE_REPO=~/src/python-scripts tools/publish_to_gitlab.sh
+# main is a PROTECTED branch there, so this commits onto a side branch and asks
+# GitLab to open a merge request as part of the push.
 #
-# Requires: a working clone of the course repo and push rights on it. Run this
-# from a machine that can reach gitlab.ethz.ch.
+# Usage:
+#     tools/publish_to_gitlab.sh                     # dry run: show the diff only
+#     tools/publish_to_gitlab.sh --push              # commit, push branch, open MR
+#     tools/publish_to_gitlab.sh --branch my-name    # use a different branch
+#     tools/publish_to_gitlab.sh --push --branch main  # direct push, if allowed
+#
+#     COURSE_REPO=~/src/python-scripts tools/publish_to_gitlab.sh --push
+#
+# COURSE_REPO points at your clone of the course repo; without it a fresh clone
+# is made in a temporary directory. Run from a machine that can reach
+# gitlab.ethz.ch, with push rights on the project.
+#
+# What it will and will not touch: everything it writes lives under
+# experiments/IRS, and it removes only files listed in the manifest it wrote on
+# a previous run. Rohdaten/ and anything else already in that directory are left
+# alone, and the commit is refused outright if a deletion falls outside that set.
 
 set -euo pipefail
 
@@ -27,8 +39,23 @@ GITLAB_URL="https://gitlab.ethz.ch/pc-praktikum-dchab/python-scripts.git"
 SUBDIR="experiments/IRS"
 COURSE_REPO="${COURSE_REPO:-$(mktemp -d)/python-scripts}"
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# main is a PROTECTED branch on the ETH GitLab project, so nobody can push to
+# it directly -- changes go through a merge request. We therefore commit onto a
+# side branch by default and ask GitLab to open the MR as part of the push.
+# Pass --branch main if you are publishing somewhere without that protection.
 PUSH=0
-[ "${1:-}" = "--push" ] && PUSH=1
+BRANCH="${BRANCH:-irs-practical-sync}"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --push)   PUSH=1; shift ;;
+    --branch) BRANCH="${2:?--branch needs a name}"; shift 2 ;;
+    -h|--help)
+      sed -n '2,23p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      exit 0 ;;
+    *) echo "unknown option: $1 (try --help)" >&2; exit 2 ;;
+  esac
+done
 
 # We publish the COMMITTED state (git archive HEAD), not the working tree, so
 # a half-finished edit can never reach students. That also excludes generated
@@ -36,6 +63,15 @@ PUSH=0
 # These paths are tracked but still should not ship: IDE config, and this
 # script itself (TA tooling, not student material).
 EXCLUDE_PATHS=(.idea tools vercel.json)
+
+# Check the SOURCE first: no point cloning or switching branches in the
+# course repo only to bail out because this repository is dirty.
+if [ -n "$(git -C "$SRC" status --porcelain)" ]; then
+  echo "!! $SRC has uncommitted changes. Commit them first -- this script" >&2
+  echo "   publishes the committed state, so anything uncommitted would be" >&2
+  echo "   silently left behind." >&2
+  exit 1
+fi
 
 if [ ! -d "$COURSE_REPO/.git" ]; then
   echo ">> cloning course repo into $COURSE_REPO"
@@ -46,9 +82,17 @@ else
   if git -C "$COURSE_REPO" remote get-url origin >/dev/null 2>&1; then
     if ! git -C "$COURSE_REPO" pull --ff-only origin main; then
       echo "!! could not fast-forward $COURSE_REPO from origin/main." >&2
-      echo "   Either gitlab.ethz.ch is unreachable from here, or your local" >&2
-      echo "   main has diverged. Fix that first -- publishing from a stale" >&2
-      echo "   clone risks reverting someone else's experiment." >&2
+      if [ -n "$(git -C "$COURSE_REPO" log origin/main..main --oneline 2>/dev/null)" ]; then
+        echo "   Your local main carries commits that are not on origin/main:" >&2
+        git -C "$COURSE_REPO" log origin/main..main --oneline 2>/dev/null | sed 's/^/     /' >&2
+        echo "   main is protected on this project, so those can never be pushed." >&2
+        echo "   Move them onto a branch, or discard them and let this script" >&2
+        echo "   recreate the commit:" >&2
+        echo "       git -C $COURSE_REPO reset --hard origin/main" >&2
+      else
+        echo "   gitlab.ethz.ch may be unreachable from here. Publishing from a" >&2
+        echo "   stale clone risks reverting someone else's experiment." >&2
+      fi
       exit 1
     fi
   else
@@ -66,12 +110,15 @@ if [ -n "$(git -C "$COURSE_REPO" status --porcelain)" ]; then
   exit 1
 fi
 
-if [ -n "$(git -C "$SRC" status --porcelain)" ]; then
-  echo "!! $SRC has uncommitted changes. Commit them first -- this script" >&2
-  echo "   publishes the committed state, so anything uncommitted would be" >&2
-  echo "   silently left behind." >&2
-  exit 1
+# Work on the side branch, rebuilt from the current main each time so it never
+# carries stale content from a previous sync.
+if [ "$BRANCH" != "main" ]; then
+  BASE=origin/main
+  git -C "$COURSE_REPO" rev-parse --verify -q "$BASE" >/dev/null || BASE=main
+  git -C "$COURSE_REPO" checkout -q -B "$BRANCH" "$BASE"
+  echo ">> working on branch '$BRANCH' (based on $BASE)"
 fi
+
 
 STAGE="$(mktemp -d)"
 WORK="$(mktemp -d)"
@@ -192,16 +239,60 @@ if [ "$PUSH" -ne 1 ]; then
   git reset -q
   git checkout -q -- "$SUBDIR" 2>/dev/null || true
   git clean -qfd -- "$SUBDIR" 2>/dev/null || true
+  [ "$BRANCH" != "main" ] && git checkout -q main 2>/dev/null || true
   echo
   echo ">> dry run complete. Nothing committed, working tree restored."
   echo "   Review the list above, then re-run with --push to commit and push."
   exit 0
 fi
 
-git commit -m "IRS practical: sync experiments/IRS from upstream
+git commit -q -m "IRS practical: sync experiments/IRS from upstream
 
 Synced from the standalone IRS_Practical repository. Student-facing
 skeletons, demo-data generator and README only; worked solutions and
-generated data are deliberately not included."
-git push origin main
-echo ">> pushed to $GITLAB_URL ($SUBDIR)"
+generated data are deliberately not included.
+
+Files this sync owns are listed in experiments/IRS/.published-by-irs-practical.
+Anything else under experiments/IRS -- Rohdaten/ in particular -- is left
+untouched."
+
+if [ "$BRANCH" = "main" ]; then
+  git push origin main
+  echo ">> pushed to $GITLAB_URL ($SUBDIR)"
+  exit 0
+fi
+
+# GitLab can open the merge request as part of the push, so this needs no
+# separate visit to the web UI. The options are ignored by non-GitLab remotes.
+TITLE="IRS practical: sync experiments/IRS"
+MR_URL="${GITLAB_URL%.git}/-/merge_requests/new?merge_request%5Bsource_branch%5D=$BRANCH"
+echo ">> pushing '$BRANCH' and requesting a merge request into main"
+
+# Try the push options first: GitLab opens the MR itself, so there is no second
+# step. Older GitLab, or any non-GitLab remote, rejects unknown push options and
+# would fail the whole push -- so fall back to a plain push and hand over the URL.
+if git push --force-with-lease \
+     -o merge_request.create \
+     -o merge_request.target=main \
+     -o merge_request.title="$TITLE" \
+     -o merge_request.remove_source_branch \
+     origin "$BRANCH" 2>&1 | tee "$WORK/push.log"; then
+  echo ">> pushed; GitLab prints the merge-request URL just above."
+elif grep -q "does not support push options" "$WORK/push.log"; then
+  echo ">> remote does not support push options; pushing without them"
+  if git push --force-with-lease origin "$BRANCH"; then
+    echo ">> pushed. Open the merge request here:"
+    echo "   $MR_URL"
+  else
+    echo "!! push failed -- see the error above." >&2
+    exit 1
+  fi
+else
+  echo "!! push failed -- see the error above." >&2
+  echo "   If the branch already has an open merge request, re-push it plainly:" >&2
+  echo "       git -C $COURSE_REPO push --force-with-lease origin $BRANCH" >&2
+  exit 1
+fi
+echo
+echo "   Merge request (if not created automatically):"
+echo "   $MR_URL"
