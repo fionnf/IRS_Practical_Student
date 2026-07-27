@@ -35,7 +35,7 @@ PUSH=0
 # data and caches for free, since those are gitignored and therefore untracked.
 # These paths are tracked but still should not ship: IDE config, and this
 # script itself (TA tooling, not student material).
-EXCLUDE_PATHS=(.idea tools)
+EXCLUDE_PATHS=(.idea tools vercel.json)
 
 if [ ! -d "$COURSE_REPO/.git" ]; then
   echo ">> cloning course repo into $COURSE_REPO"
@@ -74,7 +74,8 @@ if [ -n "$(git -C "$SRC" status --porcelain)" ]; then
 fi
 
 STAGE="$(mktemp -d)"
-trap 'rm -rf "$STAGE"' EXIT
+WORK="$(mktemp -d)"
+trap 'rm -rf "$STAGE" "$WORK"' EXIT
 echo ">> exporting $(git -C "$SRC" rev-parse --short HEAD) -> $COURSE_REPO/$SUBDIR"
 git -C "$SRC" archive HEAD | tar -x -C "$STAGE"
 for p in "${EXCLUDE_PATHS[@]}"; do rm -rf "${STAGE:?}/$p"; done
@@ -119,13 +120,13 @@ fi
 MANIFEST="$SUBDIR/.published-by-irs-practical"
 mkdir -p "$COURSE_REPO/$SUBDIR"
 
-NEW_LIST="$STAGE/.manifest.tmp"
-(cd "$STAGE" && find . -type f ! -name '.manifest.tmp' | sed 's|^\./||' | LC_ALL=C sort) > "$NEW_LIST"
+NEW_LIST="$WORK/manifest.new"
+(cd "$STAGE" && find . -type f | sed 's|^\./||' | LC_ALL=C sort) > "$NEW_LIST"
 
 # Snapshot the PREVIOUS manifest before overwriting it. The safety net below
 # must ask "did we publish this file last time?", and the new manifest can no
 # longer answer that for a file we have just stopped publishing.
-OLD_LIST="$STAGE/.manifest.old"
+OLD_LIST="$WORK/manifest.old"
 : > "$OLD_LIST"
 
 PRESERVED=0
@@ -146,7 +147,7 @@ else
   fi
 fi
 
-tar -c -C "$STAGE" --exclude='.manifest.tmp' . | tar -x -C "$COURSE_REPO/$SUBDIR"
+tar -c -C "$STAGE" . | tar -x -C "$COURSE_REPO/$SUBDIR"
 cp "$NEW_LIST" "$COURSE_REPO/$MANIFEST"
 
 cd "$COURSE_REPO"
