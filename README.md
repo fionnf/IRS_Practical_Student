@@ -58,9 +58,14 @@ concentration (Beer–Lambert law).
 
 ## Getting started
 
-1. **Clone** the repository (PyCharm: `File ▸ New Project ▸ Get from VCS`; VS
-   Code: `Ctrl/Cmd+Shift+P ▸ Git: Clone`) using
-   `https://github.com/fionnf/IRS_Practical.git`.
+1. **Get the files.** If your course points you at the ETH GitLab copy, the
+   practical lives in `experiments/IRS` of
+   `https://gitlab.ethz.ch/pc-praktikum-dchab/python-scripts` — clone that and
+   work inside `experiments/IRS`. Otherwise clone the standalone repository
+   (PyCharm: `File ▸ New Project ▸ Get from VCS`; VS Code:
+   `Ctrl/Cmd+Shift+P ▸ Git: Clone`) using
+   `https://github.com/fionnf/IRS_Practical.git`. Either way you end up with
+   the same files.
 2. **Install dependencies** in the IDE terminal:
    ```bash
    pip install -r requirements.txt
