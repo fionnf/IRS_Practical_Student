@@ -99,15 +99,13 @@ if [ -n "$LEAKS" ]; then
   echo "$LEAKS" | sed 's/^/     /' >&2
   exit 1
 fi
-for f in "$STAGE"/exercise*.py "$STAGE"/irtools.py; do
-  [ -f "$f" ] || continue
-  if ! grep -q "NotImplementedError" "$f"; then
-    echo "!! refusing to publish -- $(basename "$f") has no NotImplementedError" >&2
-    echo "   left in it. That is what a completed solution looks like; students" >&2
-    echo "   are supposed to receive skeletons." >&2
-    exit 1
-  fi
-done
+# A content-based check was tried here and removed: neither "NotImplementedError"
+# nor "TODO" separates a skeleton from a solution. Solutions keep
+# NotImplementedError in their self-test `except` handlers, exercise 1 has none
+# to begin with, and several solutions still carry main()'s TODO comments. Every
+# variant either blocked legitimate publishes or missed real solutions, so the
+# name/path check above is the guard, and the primary protection remains that
+# model answers live in a separate private repository with no route into this one.
 
 # The course repo's experiments/IRS also holds material this script does NOT
 # own -- notably Rohdaten/, the real measured spectra from previous years, and
