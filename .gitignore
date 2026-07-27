@@ -2,6 +2,7 @@
 
 # Generated / instrument data (each student provides or generates their own)
 *.dpt
+kinetics_*K/
 
 # Figures exported while working
 *.png

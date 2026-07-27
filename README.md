@@ -70,9 +70,36 @@ concentration (Beer–Lambert law).
    ```bash
    python generate_demo_data.py
    ```
-   This writes `background_*.dpt` and `ethanol_*.dpt`. (The synthetic "ethanol"
-   is a caricature — good for learning the analysis, not for quoting real band
-   values.)
+   This writes practice data for **every** exercise: `background_*.dpt` and
+   `ethanol_*.dpt`, an HCl gas spectrum, a polymer reference library with two
+   unknowns, and two complete time-resolved kinetics runs. Nothing here is a
+   substitute for your own measurements — the synthetic "ethanol", for
+   instance, is a caricature, good for learning the analysis but not for
+   quoting real band values.
+
+---
+
+## Which file goes with which part of the lab manual
+
+Work through the Python in numerical order; this table is for finding your way
+back when you are writing up a particular manual section.
+
+| Manual section | Python file(s) | Practice data |
+|---|---|---|
+| 0 — Pre-lab tools & orientation | `irtools.py` | — |
+| A — FT-IR measurement basics | `exercise1`…`exercise4`, `exercise7` | `background_*`, `ethanol_*` |
+| B — The Case of Deniz O'Sullivan | `exercise3`, `exercise7` | your own |
+| C — The Afterparty (polymers) | `exercise9_polymer_id.py` | `polymer_ref_*`, `polymer_unknown_*` |
+| D — Excess spectra of ideal mixtures | `exercise6_mixture_unmixing.py` | your own |
+| E — Rovibrational spectra of gases | `exercise8_rovibrational.py` | `hcl_gas_ab.dpt` |
+| F — Raman and IR of CS₂ | `exercise10_normalmodes.py` | your own |
+| G — The O–H band as a probe | `exercise3`, `exercise7` | your own |
+| H — H/D exchange | `exercise3`, `exercise7` | your own |
+| I — Time-resolved ATR-FTIR | `exercise11_kinetics.py` | `kinetics_298K/`, `kinetics_308K/` |
+| J — Computational bonus | `exercise5_simulation.py` | none needed |
+
+`exercise7_uncertainty.py` is used almost everywhere: any number you quote in
+the report needs an uncertainty, and that is where the tools for it live.
 
 ---
 
@@ -207,7 +234,18 @@ key figures. A good report:
   **with a propagated uncertainty**, using Exercise 7 (Exercise 7);
 - shows the P/R branch assignment, the 2-parameter vs 3-parameter (with
   centrifugal distortion) regression comparison, and the HCl-vs-DCl bond
-  length consistency check (Exercise 8).
+  length consistency check (Exercise 8);
+- gives the **full ranked hit list** for each polymer unknown — not only the
+  winner — plus the residual re-search that reveals the laminate, and says in
+  one sentence what that means for trusting a single top-hit percentage
+  (Exercise 9);
+- reports both force constants for CS₂ from the GF-matrix inversion, and
+  states whether the stretch–stretch interaction constant `k_rr` accounts for
+  the discrepancy Section F leaves open (Exercise 10);
+- shows the time-series plot with the isosbestic point marked, the
+  first-order fit with `k ± σ_k` and a half-life, the residual plot, and the
+  `order_test` comparison — plus an honest note on how much `k` moves when the
+  noise-dominated late points are dropped (Exercise 11).
 
 ## Tips & troubleshooting
 

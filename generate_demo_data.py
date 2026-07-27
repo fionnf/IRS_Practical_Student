@@ -12,6 +12,12 @@ end-to-end:
     background_rifg.dpt   background_sifg.dpt   background_ab.dpt
     ethanol_rifg.dpt      ethanol_sifg.dpt      ethanol_ab.dpt
     hcl_gas_ab.dpt         (for exercise8_rovibrational.py)
+    polymer_ref_*.dpt      (for exercise9_polymer_id.py)
+    polymer_unknown_*.dpt  (   "" -- one of them is not what it looks like)
+    kinetics_298K/, kinetics_308K/
+                           (for exercise11_kinetics.py -- a time series per
+                            directory, plus a times.csv listing each file's
+                            acquisition time in seconds)
 
 The "ethanol" here is a caricature with a few characteristic bands -- good
 enough to learn the data analysis, but do NOT quote these numbers as real
@@ -183,6 +189,82 @@ def polymer_spectrum(wn, name):
     return absorbance(wn, POLYMER_BANDS[name])
 
 
+# ---------------------------------------------------------------------------
+# Synthetic time-resolved ATR series, for exercise11_kinetics.py
+#
+# The chemistry is the acetic anhydride hydrolysis of Section I:
+#
+#     (CH3CO)2O  +  H2O  -->  2 CH3COOH
+#
+# run with water in large excess, so it is pseudo-first-order in anhydride.
+# The anhydride carbonyl pair at 1820/1750 cm^-1 decays while the acid
+# carbonyl at 1710 cm^-1 grows. Because the whole series is a one-parameter
+# family (everything is set by the extent of reaction), the spectra share an
+# ISOSBESTIC POINT -- exercise11 STEP 2 asks students to find it.
+#
+# Two temperatures are written so the Arrhenius question (STEP 5, Q6) can also
+# be practised without lab time. The rate constants below are realistic for
+# this reaction, and k(308 K) is derived from k(298 K) with a fixed activation
+# energy -- which is exactly the quantity students are asked to recover, so it
+# is deliberately NOT stated here. Work it out from the two rate constants.
+# ---------------------------------------------------------------------------
+_R_GAS = 8.314462618          # J/(mol K)
+
+# (centre cm^-1, height per unit concentration, FWHM cm^-1)
+ANHYDRIDE_BANDS = [
+    (1820, 0.55, 22),         # C=O asymmetric stretch
+    (1750, 0.72, 26),         # C=O symmetric stretch
+]
+ACETIC_ACID_BANDS = [
+    (1710, 0.48, 30),         # C=O stretch of the acid product
+]
+
+
+def _kinetics_frame(wn, extent, drift, rng, noise=1.5e-3):
+    """One ATR spectrum at fractional extent of reaction `extent` (0 -> 1)."""
+    x_anh = 1.0 - extent                       # anhydride remaining
+    c_acid = 2.0 * extent                      # 2 acid per anhydride consumed
+    A = x_anh * absorbance(wn, ANHYDRIDE_BANDS)
+    A = A + c_acid * absorbance(wn, ACETIC_ACID_BANDS)
+    # Thermal/contact drift on the ATR crystal: a slow, slightly CURVED
+    # offset that grows through the run. The curvature is the point -- a
+    # straight baseline drawn locally under one band is a good approximation
+    # over 50 cm^-1, whereas one straight baseline across the whole window is
+    # not. That is why exercise11 has you subtract a LOCAL baseline at every
+    # time point instead of correcting the series once at the start.
+    span = (wn - wn.min()) / np.ptp(wn)
+    A = A + drift * (0.35 + 0.65 * span + 0.5 * span ** 2)
+    return A + rng.normal(0, noise, size=A.shape)
+
+
+def write_kinetics_series(directory, k, t_end, dt, rng, label):
+    """Write one whole time-resolved run into `directory`."""
+    import os
+
+    os.makedirs(directory, exist_ok=True)
+    wn = np.arange(1600.0, 1900.0 + 0.5, 0.5)
+    times = np.arange(0.0, t_end + dt, dt)
+
+    rows = []
+    for i, t in enumerate(times):
+        extent = 1.0 - np.exp(-k * t)
+        drift = 0.008 * (t / t_end)            # baseline creeps up over the run
+        A = _kinetics_frame(wn, extent, drift, rng)
+        name = "spec_%03d.dpt" % i
+        np.savetxt(os.path.join(directory, name),
+                   np.column_stack([wn, A]), delimiter=",", fmt="%.8g")
+        rows.append((name, t))
+
+    # The instrument writes a log of when each scan was taken; so do we.
+    with open(os.path.join(directory, "times.csv"), "w") as fh:
+        fh.write("filename,time_s\n")
+        for name, t in rows:
+            fh.write("%s,%.1f\n" % (name, t))
+
+    print("  wrote %s/  (%d spectra + times.csv, %s)"
+          % (directory, len(rows), label))
+
+
 def main():
     rng = np.random.default_rng(42)
 
@@ -236,6 +318,21 @@ def main():
     unknown2 = 0.62 * polymer_spectrum(wn_poly, "PET") + 0.38 * polymer_spectrum(wn_poly, "PE")
     unknown2 = unknown2 + rng.normal(0, 5e-3, size=unknown2.shape)
     save_dpt("polymer_unknown_2.dpt", unknown2, x=wn_poly)
+
+    # ---- Time-resolved ATR kinetics, two temperatures (exercise 11). ----
+    # k at 298 K is a realistic pseudo-first-order rate constant for acetic
+    # anhydride hydrolysis; k at 308 K follows from a fixed activation energy.
+    k_298 = 2.80e-3                    # s^-1
+    e_a = 45.0e3                       # J/mol -- recover this in Q6, don't peek
+    k_308 = k_298 * np.exp(-e_a / _R_GAS * (1 / 308.15 - 1 / 298.15))
+    # Each run is stopped after about 3.5 half-lives, which is what you would
+    # actually do at the bench. Running much longer does not add information:
+    # the band has decayed into the noise, and those points then dominate a
+    # log-linearised fit while carrying almost no signal (exercise11, Q4/Q5).
+    write_kinetics_series("kinetics_298K", k_298, t_end=900.0, dt=15.0,
+                          rng=rng, label="25 degC")
+    write_kinetics_series("kinetics_308K", k_308, t_end=500.0, dt=10.0,
+                          rng=rng, label="35 degC")
 
     print("\nDone. You can now run exercise1_interferogram.py")
 

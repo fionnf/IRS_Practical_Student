@@ -12,9 +12,9 @@ do, none of which you should be doing by eye:
           actually works, why it can be confidently WRONG, and how to catch
           it out.
   Part B  ATR PENETRATION DEPTH -- turn the qualitative "ATR down-weights
-          strong bands" hand-wave into a number (Section C, Q1-Q3).
+          strong bands" hand-wave into a number (Section C, Q2-Q4).
   Part C  CRYSTALLINITY INDEX -- extract a physical material property from
-          the polyethylene 730/720 cm^-1 rocking doublet (Section C, Q4-Q5).
+          the polyethylene 730/720 cm^-1 rocking doublet (Section C, Q5-Q6).
 
 Why Part A matters
 ------------------
@@ -279,7 +279,7 @@ def main():
     # TODO: your residual analysis and plots here
 
     # -----------------------------------------------------------------
-    # STEP 5 -- ATR penetration depth (Section C, Q1-Q3).
+    # STEP 5 -- ATR penetration depth (Section C, Q2-Q4).
     #   Q6. Using YOUR accessory's crystal index and angle, tabulate d_p at
     #       3000, 1500 and 700 cm^-1. By what factor does it change across
     #       your spectrum?
@@ -292,7 +292,7 @@ def main():
     # TODO: compute and plot penetration_depth over your wavenumber range
 
     # -----------------------------------------------------------------
-    # STEP 6 -- Crystallinity (Section C, Q4-Q5), if you have a PE film.
+    # STEP 6 -- Crystallinity (Section C, Q5-Q6), if you have a PE film.
     #   Q8. Report the crystallinity index for each PE-like film you measured.
     #       If you have more than one, rank them and check the ranking against
     #       the films' physical stiffness/opacity.

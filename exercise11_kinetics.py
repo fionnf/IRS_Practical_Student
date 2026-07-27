@@ -9,7 +9,7 @@ happily record one spectrum every few seconds while chemistry happens on top
 of it, and that turns the spectrometer into a kinetics instrument: you watch
 one band shrink and another grow, and extract a rate constant.
 
-This is the computational companion to Section J of the practical. You will:
+This is the computational companion to Section I of the practical. You will:
 
   * load a whole time series of spectra,
   * integrate a chosen band at each time point (with a local baseline),
