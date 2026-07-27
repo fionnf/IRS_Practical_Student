@@ -20,16 +20,27 @@ tabs render, zero console errors, zero failed network requests. So it can be
 served by anything that serves static files, and students need no account of any
 kind to open it.
 
-**GitHub Pages** (no extra service, no config):
-`Settings ▸ Pages ▸ Source: Deploy from a branch ▸ master ▸ /docs`.
-It then appears at `https://fionnf.github.io/IRS_Practical/`, which is the URL
-the lab manual points at.
+**Live at <https://irs-practical.vercel.app/>** — this is the URL both lab
+manuals point at. It is a Vercel project tracking this repository, so every push
+to `master` redeploys it automatically; there is nothing to do by hand.
 
-**Vercel / Netlify / Cloudflare Pages**: import the repository and serve the
-`docs/` directory. `vercel.json` in the repository root already sets
-`outputDirectory` to `docs`, so a Vercel import needs no further configuration.
-If you deploy somewhere with a different domain, update the three `\url{}`
-references in `IRS-Manual.tex` and the two in `IRS_Assistant_Manual.tex`.
+`vercel.json` in the repository root drives that deploy. It pins `framework`,
+`installCommand` and `buildCommand` to no-ops and sets `outputDirectory` to
+`docs`, giving a pure static deploy with this directory as the web root. Leave
+Vercel's **Root Directory** at the repository root: pointing it at `docs` makes
+Vercel look for `docs/vercel.json` instead and the config silently stops
+applying.
+
+**Alternatives**, should the Vercel project ever go away:
+
+- **GitHub Pages**, no extra service and no config:
+  `Settings ▸ Pages ▸ Source: Deploy from a branch ▸ master ▸ /docs`, which
+  serves it at `https://fionnf.github.io/IRS_Practical/`.
+- **Netlify / Cloudflare Pages**: import the repository and publish `docs/`.
+
+If you move it, update the URL in **five** places — three `\url{}` references in
+`IRS-Manual.tex`, two in `IRS_Assistant_Manual.tex` — plus the repository
+READMEs.
 
 **Offline**: the file works from `file://` too. Copy it onto a lab machine or a
 USB stick and it behaves identically — useful if the lab network is restricted.

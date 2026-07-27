@@ -45,7 +45,7 @@ nothing it prints is graded.
 > **The interactive bench page** — four in-browser instruments (interferometer
 > console, rovibrational simulator, normal-mode explorer, and a symmetry explorer
 > covering 34 molecules across 15 point groups) — lives at
-> **<https://fionnf.github.io/IRS_Practical/>**. No account or install needed;
+> **<https://irs-practical.vercel.app/>**. No account or install needed;
 > Section 0 of the manual walks you through it.
 
 ```
