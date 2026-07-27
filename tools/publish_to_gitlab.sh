@@ -79,6 +79,28 @@ echo ">> exporting $(git -C "$SRC" rev-parse --short HEAD) -> $COURSE_REPO/$SUBD
 git -C "$SRC" archive HEAD | tar -x -C "$STAGE"
 for p in "${EXCLUDE_PATHS[@]}"; do rm -rf "${STAGE:?}/$p"; done
 
+# Belt and braces. Model answers live in the separate PRIVATE course repo and
+# have no route into this one, but this publishes to a student-facing location,
+# so check anyway rather than trust that. Refuse outright on anything that looks
+# like solutions, and on any exercise file with its NotImplementedError markers
+# already filled in.
+LEAKS=$(cd "$STAGE" && find . \( -iname '*solution*' -o -iname '*worked*' \
+        -o -iname '*answer*' -o -iname '*musterloesung*' \) -print | sed 's|^\./||')
+if [ -n "$LEAKS" ]; then
+  echo "!! refusing to publish -- these look like answer material:" >&2
+  echo "$LEAKS" | sed 's/^/     /' >&2
+  exit 1
+fi
+for f in "$STAGE"/exercise*.py "$STAGE"/irtools.py; do
+  [ -f "$f" ] || continue
+  if ! grep -q "NotImplementedError" "$f"; then
+    echo "!! refusing to publish -- $(basename "$f") has no NotImplementedError" >&2
+    echo "   left in it. That is what a completed solution looks like; students" >&2
+    echo "   are supposed to receive skeletons." >&2
+    exit 1
+  fi
+done
+
 # The course repo's experiments/IRS also holds material this script does NOT
 # own -- notably Rohdaten/, the real measured spectra from previous years, and
 # any scripts the course kept alongside them. We must never delete those.
