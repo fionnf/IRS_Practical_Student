@@ -170,6 +170,16 @@ problem to extract both force constants from your measured spectrum — which
 resolves the ~7% discrepancy Section F deliberately leaves hanging as a real,
 small stretch–stretch interaction constant rather than experimental error.
 
+### 11. `exercise11_kinetics.py` — following a reaction in real time
+The Section I companion. An ATR crystal will record a spectrum every few
+seconds while chemistry happens on top of it, which turns the spectrometer
+into a kinetics instrument. You load a whole time series, integrate a band
+with a **local baseline** at each time point (area, not height — it survives
+a band that shifts or broadens), fit a first-order rate law with a real
+uncertainty on *k*, and then **test** the rate law rather than assuming it.
+Includes a deliberate trap worth understanding: log-linearising re-weights
+your noisiest late-time points.
+
 > `dft_example.R` is an optional R version of the core workflow. It is provided
 > as-is; teaching assistants support **Python** only.
 
