@@ -64,8 +64,22 @@ def absorbance(wn, bands):
     return A
 
 
-def spectrum_to_interferogram(single_beam, rng, noise=2e-3):
-    """One-sided spectrum -> real, centre-bursted interferogram with noise."""
+def spectrum_to_interferogram(single_beam, rng, noise=1e-4):
+    """One-sided spectrum -> real, centre-bursted interferogram with noise.
+
+    ``noise`` is expressed as a fraction of the CENTRE BURST height, which is
+    where a real detector's dynamic range is set. Because the burst towers
+    over the wings, a seemingly small fraction here becomes a substantial
+    noise level once you transform back into the spectrum -- so this number
+    is much more sensitive than it looks.
+
+    At 1e-4 a correct pipeline recovers the known band absorbances to about
+    1.5%, which is what makes the exercise-2 comparison against
+    ``ethanol_ab.dpt`` meaningful: a student whose overlay disagrees by more
+    than a few percent has a real bug, not bad luck. Raising this to 1e-3
+    makes the recovered peak heights scatter by tens of percent and the
+    comparison stops being diagnostic.
+    """
     ifg = np.fft.irfft(single_beam, n=M)
     ifg = np.fft.fftshift(ifg)                 # put the centre burst in the middle
     ifg = ifg + rng.normal(0, noise * ifg.max(), size=ifg.shape)
@@ -124,8 +138,25 @@ def hcl_line_positions(nu0, be, de, j_max=9):
     return np.array(m_vals), np.array(nus)
 
 
-def hcl_gas_spectrum(wn, T=298.0, linewidth=1.6):
-    """Synthetic natural-abundance HCl absorbance spectrum on grid `wn`."""
+def hcl_gas_spectrum(wn, T=298.0, linewidth=3.0):
+    """Synthetic natural-abundance HCl absorbance spectrum on grid `wn`.
+
+    ``linewidth`` (FWHM, cm^-1) stands in for the instrument resolution, and
+    it decides whether you can see one isotopologue or two. Natural chlorine
+    is 76% Cl-35 and 24% Cl-37, and their line progressions sit only about
+    2 cm^-1 apart:
+
+      * At the default 3.0 cm^-1 -- typical for a benchtop FT-IR -- the two
+        progressions BLEND into single lines. You measure one clean line list
+        with a uniform ~21 cm^-1 spacing, and recover the H35Cl constants.
+        This is the spectrum exercise 8 is designed around.
+      * Below about 2 cm^-1 the doublet RESOLVES, and a naive line list then
+        interleaves both isotopologues. Fitting that mixture gives a badly
+        wrong B_e (roughly half the true value), because alternate "lines"
+        are not consecutive rotational states at all. Separating the two
+        progressions first is the whole point of Section E's advanced
+        isotope question -- see ``hcl_gas_highres_ab.dpt``.
+    """
     mu35 = _M_H * _M_CL35 / (_M_H + _M_CL35)
     mu37 = _M_H * _M_CL37 / (_M_H + _M_CL37)
     nu0_37, be_37 = _isotope_scale(_NU0_35, _BE_35, mu35, mu37)
@@ -295,8 +326,13 @@ def main():
 
     # ---- Synthetic HCl gas-phase rovibrational spectrum (exercise 8). ----
     wn_hcl = np.linspace(2600, 3150, 6000)
-    A_hcl = hcl_gas_spectrum(wn_hcl)
-    save_dpt("hcl_gas_ab.dpt", A_hcl, x=wn_hcl)
+    save_dpt("hcl_gas_ab.dpt", hcl_gas_spectrum(wn_hcl), x=wn_hcl)
+    # A second, higher-resolution version in which the Cl-35/Cl-37 doublet is
+    # resolved. Use this ONLY for the advanced isotope question -- fitting it
+    # like the file above, without separating the two progressions first, is
+    # guaranteed to give you a nonsense bond length.
+    save_dpt("hcl_gas_highres_ab.dpt",
+             hcl_gas_spectrum(wn_hcl, linewidth=0.6), x=wn_hcl)
 
     # ---- Polymer reference library + two unknowns (exercise 9). ----
     wn_poly = np.linspace(600, 3200, 5200)

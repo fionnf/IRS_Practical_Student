@@ -79,35 +79,92 @@ echo ">> exporting $(git -C "$SRC" rev-parse --short HEAD) -> $COURSE_REPO/$SUBD
 git -C "$SRC" archive HEAD | tar -x -C "$STAGE"
 for p in "${EXCLUDE_PATHS[@]}"; do rm -rf "${STAGE:?}/$p"; done
 
-# Replace the subdirectory wholesale so files deleted upstream also disappear
-# here. Scoped to $SUBDIR, so nothing outside experiments/IRS is ever touched.
-rm -rf "${COURSE_REPO:?}/$SUBDIR"
+# The course repo's experiments/IRS also holds material this script does NOT
+# own -- notably Rohdaten/, the real measured spectra from previous years, and
+# any scripts the course kept alongside them. We must never delete those.
+#
+# So we track exactly what WE published, in a manifest committed next to the
+# files. On each run we copy our files in, then remove only those listed in the
+# previous manifest that we no longer publish. Anything absent from the
+# manifest was not put there by this script and is left strictly alone -- and
+# on a first run, with no manifest present, nothing is deleted at all.
+MANIFEST="$SUBDIR/.published-by-irs-practical"
 mkdir -p "$COURSE_REPO/$SUBDIR"
-tar -c -C "$STAGE" . | tar -x -C "$COURSE_REPO/$SUBDIR"
+
+NEW_LIST="$STAGE/.manifest.tmp"
+(cd "$STAGE" && find . -type f ! -name '.manifest.tmp' | sed 's|^\./||' | LC_ALL=C sort) > "$NEW_LIST"
+
+# Snapshot the PREVIOUS manifest before overwriting it. The safety net below
+# must ask "did we publish this file last time?", and the new manifest can no
+# longer answer that for a file we have just stopped publishing.
+OLD_LIST="$STAGE/.manifest.old"
+: > "$OLD_LIST"
+
+PRESERVED=0
+if [ -f "$COURSE_REPO/$MANIFEST" ]; then
+  cp "$COURSE_REPO/$MANIFEST" "$OLD_LIST"
+  while IFS= read -r rel; do
+    [ -z "$rel" ] && continue
+    if ! grep -qxF -- "$rel" "$NEW_LIST"; then
+      rm -f "$COURSE_REPO/$SUBDIR/$rel"
+    fi
+  done < "$OLD_LIST"
+else
+  PRESERVED=$(find "$COURSE_REPO/$SUBDIR" -type f 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$PRESERVED" -gt 0 ]; then
+    echo ">> first run: $PRESERVED existing file(s) already in $SUBDIR will be"
+    echo "   left untouched (Rohdaten/, previous scripts, ...). This script only"
+    echo "   ever removes files it published itself."
+  fi
+fi
+
+tar -c -C "$STAGE" --exclude='.manifest.tmp' . | tar -x -C "$COURSE_REPO/$SUBDIR"
+cp "$NEW_LIST" "$COURSE_REPO/$MANIFEST"
 
 cd "$COURSE_REPO"
-if git diff --quiet -- "$SUBDIR" && [ -z "$(git status --porcelain -- "$SUBDIR")" ]; then
+if [ -z "$(git status --porcelain -- "$SUBDIR")" ]; then
   echo ">> no changes; course repo is already up to date."
   exit 0
 fi
 
 git add -- "$SUBDIR"
-echo
-echo "===== files this will change (scoped to $SUBDIR) ====="
-git status --short -- "$SUBDIR"
-echo "======================================================"
 
-# Safety net: prove nothing outside the subdirectory got staged.
+# Safety net 1: nothing outside the subdirectory may be staged.
 OUTSIDE=$(git diff --cached --name-only | grep -v "^$SUBDIR/" || true)
 if [ -n "$OUTSIDE" ]; then
   echo "!! refusing to continue -- staged files outside $SUBDIR:" >&2
   echo "$OUTSIDE" >&2
+  git reset -q
   exit 1
 fi
 
+# Safety net 2: never delete anything we did not publish ourselves.
+BAD_DEL=$(git diff --cached --name-only --diff-filter=D \
+          | sed "s|^$SUBDIR/||" \
+          | { grep -vxF -f "$OLD_LIST" || true; } \
+          | grep -v '^\.published-by-irs-practical$' || true)
+if [ -n "$BAD_DEL" ]; then
+  echo "!! refusing to continue -- this would delete files the script does not own:" >&2
+  echo "$BAD_DEL" | sed 's/^/     /' >&2
+  git reset -q
+  exit 1
+fi
+
+echo
+echo "===== files this will change (scoped to $SUBDIR) ====="
+git status --short -- "$SUBDIR"
+echo "======================================================"
+echo "  additions/updates: $(git diff --cached --name-only --diff-filter=AM | wc -l | tr -d ' ')"
+echo "  removals:          $(git diff --cached --name-only --diff-filter=D | wc -l | tr -d ' ')"
+
 if [ "$PUSH" -ne 1 ]; then
+  # Leave the index exactly as we found it, or the next run trips the
+  # "uncommitted changes" guard and you can never get past the dry run.
+  git reset -q
+  git checkout -q -- "$SUBDIR" 2>/dev/null || true
+  git clean -qfd -- "$SUBDIR" 2>/dev/null || true
   echo
-  echo ">> dry run complete. Nothing committed."
+  echo ">> dry run complete. Nothing committed, working tree restored."
   echo "   Review the list above, then re-run with --push to commit and push."
   exit 0
 fi
