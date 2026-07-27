@@ -42,6 +42,12 @@ present, and shows how many self-tests each exercise passes. **Run it first, run
 it when you are stuck, and run it before you hand in.** It is a diagnostic tool —
 nothing it prints is graded.
 
+> **The interactive bench page** — four in-browser instruments (interferometer
+> console, rovibrational simulator, normal-mode explorer, and a symmetry explorer
+> covering 34 molecules across 15 point groups) — lives at
+> **<https://fionnf.github.io/IRS_Practical/>**. No account or install needed;
+> Section 0 of the manual walks you through it.
+
 ```
 3. Your progress
 ----------------------------------------------------------
