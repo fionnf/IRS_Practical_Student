@@ -84,8 +84,16 @@ for p in "${EXCLUDE_PATHS[@]}"; do rm -rf "${STAGE:?}/$p"; done
 # so check anyway rather than trust that. Refuse outright on anything that looks
 # like solutions, and on any exercise file with its NotImplementedError markers
 # already filled in.
-LEAKS=$(cd "$STAGE" && find . \( -iname '*solution*' -o -iname '*worked*' \
-        -o -iname '*answer*' -o -iname '*musterloesung*' \) -print | sed 's|^\./||')
+# Note the patterns are deliberately anchored: a bare '*solution*' also matches
+# exercise4_reSOLUTION.py, which would block every legitimate publish.
+LEAKS=$(cd "$STAGE" && find . \( \
+          -iname 'solution' -o -iname 'solutions' \
+          -o -iname 'solution_*' -o -iname 'solutions_*' \
+          -o -iname '*_solution.*' -o -iname '*_solutions.*' \
+          -o -iname 'worked' -o -iname 'worked_*' -o -iname '*_worked.*' \
+          -o -iname 'answers' -o -iname 'answer_*' -o -iname '*_answers.*' \
+          -o -iname 'musterloesung*' -o -iname '*.solution' \
+        \) -print | sed 's|^\./||')
 if [ -n "$LEAKS" ]; then
   echo "!! refusing to publish -- these look like answer material:" >&2
   echo "$LEAKS" | sed 's/^/     /' >&2
