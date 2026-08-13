@@ -1,0 +1,59 @@
+name: Deploy bench page to GitHub Pages
+
+# The IRS Practical Bench is a single self-contained HTML file in docs/, so
+# there is nothing to build -- this just publishes that directory.
+#
+# It runs alongside the Vercel deployment rather than replacing it: the two are
+# independent, so if one is down or a student's network blocks it, the other
+# still serves the page. The lab manuals link to the Vercel URL; this one is
+# https://<owner>.github.io/IRS_Practical/
+#
+# One-time setup: Settings > Pages > Source: GitHub Actions.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a running deploy half-way; queue instead.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the page is self-contained
+        run: |
+          # The page must not depend on any external host: students may open it
+          # on a restricted lab network, and a silent CDN dependency would show
+          # up as a half-rendered page rather than an error.
+          if grep -nEo '(src|href)="https?://[^"]+"' docs/index.html; then
+            echo "::error::docs/index.html references an external resource"
+            exit 1
+          fi
+          test -s docs/index.html
+          grep -qi '<!doctype html>' docs/index.html \
+            || { echo "::error::docs/index.html is missing its doctype"; exit 1; }
+          echo "self-contained: OK ($(wc -c < docs/index.html) bytes)"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4
