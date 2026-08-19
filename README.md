@@ -11,8 +11,7 @@
 You take **raw data from an FT-IR spectrometer** and turn it, step by step and
 with code you write yourself, into an interpretable infrared spectrum. Then you
 push further: identify functional groups, measure how the instrument's own
-settings shape the spectrum, extract bond lengths and force constants, and
-follow a reaction in real time.
+settings shape the spectrum, and extract bond lengths and force constants.
 
 This is a **practical, not a tutorial with the answers filled in.** Almost every
 file is a skeleton: docstrings and hints tell you *what* each piece must do, and
@@ -127,7 +126,6 @@ learning the analysis, not for your report.
 | `polymer_unknown_*.dpt` | Two unknowns. One is not what it first appears to be. |
 | `hcl_gas_ab.dpt` | HCl gas-phase rovibrational spectrum (exercise 8) |
 | `hcl_gas_highres_ab.dpt` | Same, sharp enough to resolve the Cl-35/Cl-37 doublet — for the advanced isotope question only |
-| `kinetics_298K/`, `kinetics_308K/` | A spectrum per time point plus `times.csv` (exercise 11) |
 
 A `.dpt` file is just comma-separated `wavenumber, value`.
 
@@ -167,8 +165,9 @@ Numerical experiments on the three things that shape every FT-IR spectrum:
 **apodization** (peak shape versus ringing) and **zero-filling** (interpolation
 versus true resolving power).
 
-### 5. `exercise5_simulation.py` — build a spectrometer
-Run the physics **backwards**: turn a known spectrum into an interferogram, then
+### 5. `exercise5_simulation.py` — build a spectrometer *(optional)*
+Not assigned by the current task list, but kept because it is the clearest way to
+see the whole pipeline from the other side. Run the physics **backwards**: turn a known spectrum into an interferogram, then
 recover it. Six parts — forward model, round trip, why noise falls as √n,
 Beer–Lambert calibration, deconvolving overlapping bands with `curve_fit`, and a
 Monte Carlo uncertainty. Needs no instrument data.
@@ -206,13 +205,6 @@ constants from your measured spectrum — resolving the ~7% discrepancy the manu
 deliberately leaves hanging as a real stretch–stretch interaction constant rather
 than experimental error.
 
-### 11. `exercise11_kinetics.py` — following a reaction in real time
-Load a whole time series, integrate a band with a **local baseline** at each time
-point (area, not height — it survives a band that shifts or broadens), fit a
-first-order rate law with a real uncertainty on *k*, and then **test** the rate
-law rather than assuming it. Includes a trap worth understanding: log-linearising
-re-weights your noisiest late-time points.
-
 > `dft_example.R` is an optional R version of the core workflow, provided as-is.
 > Teaching assistants support **Python** only.
 
@@ -231,8 +223,6 @@ re-weights your noisiest late-time points.
 | F — Raman and IR of CS₂ | `exercise10_normalmodes.py` | your own |
 | G — The O–H band as a probe | `exercise3`, `exercise7` | your own |
 | H — H/D exchange | `exercise3`, `exercise7` | your own |
-| I — Time-resolved ATR-FTIR | `exercise11_kinetics.py` | `kinetics_298K/`, `kinetics_308K/` |
-| J — Computational bonus | `exercise5_simulation.py` | none needed |
 
 ---
 
@@ -308,7 +298,6 @@ the key figures. A good report:
 | Spectrum shifted along x | Your wavenumber axis should have exactly `N//2` points. |
 | Peaks at the wrong wavenumbers | You are probably plotting against array index rather than the wavenumber axis. |
 | Exercise 8 gives a nonsense bond length (~2× too long) | You used `hcl_gas_highres_ab.dpt`. Its resolved Cl-35/Cl-37 doublet interleaves two line progressions; use `hcl_gas_ab.dpt` unless you are doing the advanced isotope question. |
-| Kinetics fit returns `NaN` | Some band areas have gone negative in the noise. Drop the late points that have decayed into the noise floor, and say that you did. |
 
 Remember the IR convention: plot wavenumber **decreasing** left to right
 (`plt.xlim(4000, 500)`).

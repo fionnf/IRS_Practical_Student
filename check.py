@@ -40,7 +40,6 @@ EXERCISES = [
     ("exercise8_rovibrational.py", "report", "HCl rovibrational constants"),
     ("exercise9_polymer_id.py", "selftest", "Library matching and ATR depth"),
     ("exercise10_normalmodes.py", "selftest", "GF-matrix normal modes"),
-    ("exercise11_kinetics.py", "selftest", "Time-resolved kinetics"),
 ]
 
 REQUIRED_PACKAGES = ["numpy", "scipy", "matplotlib"]
@@ -51,7 +50,6 @@ DATA_GROUPS = [
     ("ethanol_ab.dpt", "reference absorbance to validate against (exercise 2)"),
     ("hcl_gas_ab.dpt", "HCl gas-phase spectrum (exercise 8)"),
     ("polymer_ref_PE.dpt", "polymer library (exercise 9)"),
-    ("kinetics_298K/times.csv", "kinetics time series (exercise 11)"),
 ]
 
 GREEN, YELLOW, RED, DIM, BOLD, OFF = (
