@@ -2,7 +2,9 @@
 generate_demo_data.py  --  make synthetic .dpt files to practise on
 ===================================================================
 
-Run this ONCE if you do not have real instrument data:
+You do not normally need to run this yourself: `check.py` and every
+exercise call it automatically when the practice data is missing. Run it by
+hand only if you want to regenerate the files:
 
     python generate_demo_data.py
 
@@ -11,9 +13,11 @@ end-to-end:
 
     background_rifg.dpt   background_sifg.dpt   background_ab.dpt
     ethanol_rifg.dpt      ethanol_sifg.dpt      ethanol_ab.dpt
-    hcl_gas_ab.dpt         (for exercise8_rovibrational.py)
     polymer_ref_*.dpt      (for exercise9_polymer_id.py)
     polymer_unknown_*.dpt  (   "" -- one of them is not what it looks like)
+    kinetics_298K/         (for exercise11_kinetics.py -- one spectrum per
+    kinetics_308K/          time point, plus a times.csv giving each file's
+                            acquisition time in seconds)
 
 The "ethanol" here is a caricature with a few characteristic bands -- good
 enough to learn the data analysis, but do NOT quote these numbers as real
@@ -24,6 +28,8 @@ This is a *tool*, not an exercise, so it is written out in full. Read it if
 you are curious how a spectrometer turns a spectrum back into an
 interferogram -- exercise 5 has you build that yourself.
 """
+
+import os
 
 import numpy as np
 
@@ -115,73 +121,6 @@ _ABUNDANCE_35 = 0.7577
 _ABUNDANCE_37 = 0.2423
 
 
-def _isotope_scale(nu0, be, mu_ref, mu_new):
-    ratio = mu_ref / mu_new
-    return nu0 * np.sqrt(ratio), be * ratio
-
-
-def hcl_line_positions(nu0, be, de, j_max=9):
-    """Return (m, nu) for the P and R branch lines of a rovibrational band."""
-    m_vals, nus = [], []
-    for J in range(0, j_max):          # R branch, m = J+1
-        m = J + 1
-        m_vals.append(m)
-        nus.append(nu0 + 2 * be * m - 4 * de * m ** 3)
-    for J in range(1, j_max):          # P branch, m = -J
-        m = -J
-        m_vals.append(m)
-        nus.append(nu0 + 2 * be * m - 4 * de * m ** 3)
-    return np.array(m_vals), np.array(nus)
-
-
-def hcl_gas_spectrum(wn, T=298.0, linewidth=3.0):
-    """Synthetic natural-abundance HCl absorbance spectrum on grid `wn`.
-
-    ``linewidth`` (FWHM, cm^-1) stands in for the instrument resolution, and
-    it decides whether you can see one isotopologue or two. Natural chlorine
-    is 76% Cl-35 and 24% Cl-37, and their line progressions sit only about
-    2 cm^-1 apart:
-
-      * At the default 3.0 cm^-1 -- typical for a benchtop FT-IR -- the two
-        progressions BLEND into single lines. You measure one clean line list
-        with a uniform ~21 cm^-1 spacing, and recover the H35Cl constants.
-        This is the spectrum exercise 8 is designed around.
-      * Below about 2 cm^-1 the doublet RESOLVES, and a naive line list then
-        interleaves both isotopologues. Fitting that mixture gives a badly
-        wrong B_e (roughly half the true value), because alternate "lines"
-        are not consecutive rotational states at all. Separating the two
-        progressions first is the whole point of Section E's advanced
-        isotope question -- see ``hcl_gas_highres_ab.dpt``.
-    """
-    mu35 = _M_H * _M_CL35 / (_M_H + _M_CL35)
-    mu37 = _M_H * _M_CL37 / (_M_H + _M_CL37)
-    nu0_37, be_37 = _isotope_scale(_NU0_35, _BE_35, mu35, mu37)
-    de_37 = _DE_35 * (be_37 / _BE_35) ** 3   # De ~ Be^3 (Kratzer relation)
-
-    A = np.zeros_like(wn)
-    for nu0, be, de, abundance in [
-        (_NU0_35, _BE_35, _DE_35, _ABUNDANCE_35),
-        (nu0_37, be_37, de_37, _ABUNDANCE_37),
-    ]:
-        m_vals, nus = hcl_line_positions(nu0, be, de)
-        for m, nu in zip(m_vals, nus):
-            J = m - 1 if m > 0 else -m
-            pop = (2 * J + 1) * np.exp(-_H * _C_CGS * be * J * (J + 1) / (_KB * T))
-            A += abundance * pop * _gauss(wn, nu, 1.0, linewidth)
-
-    A = A / A.max() * 0.75   # rescale to a plausible peak absorbance
-    return A
-
-
-# ---------------------------------------------------------------------------
-# Synthetic polymer reference spectra, for exercise9_polymer_id.py
-#
-# Band positions are approximately correct for each polymer (they are the
-# genuinely diagnostic ones a chemist would use), but the relative intensities
-# are simplified. Treat these as a TEACHING library for learning how library
-# matching works -- not as a substitute for a real commercial reference
-# library when identifying an actual unknown.
-# ---------------------------------------------------------------------------
 POLYMER_BANDS = {
     # (centre cm^-1, height, FWHM cm^-1)
     "PE": [
@@ -216,6 +155,80 @@ def polymer_spectrum(wn, name):
     return absorbance(wn, POLYMER_BANDS[name])
 
 
+# ---------------------------------------------------------------------------
+# Synthetic time-resolved ATR series, for exercise11_kinetics.py
+#
+# The chemistry is the acetic anhydride hydrolysis of Section E:
+#
+#     (CH3CO)2O  +  H2O  -->  2 CH3COOH
+#
+# run with water in large excess, so it is pseudo-first-order in anhydride.
+# The anhydride carbonyl pair at 1820/1750 cm^-1 decays while the acid
+# carbonyl at 1710 cm^-1 grows. Because the whole series is a one-parameter
+# family (everything is set by the extent of reaction), the spectra share an
+# ISOSBESTIC POINT -- exercise11 asks students to find it.
+#
+# Two temperatures are written so the Arrhenius question can also be practised
+# without lab time. The rate constants below are realistic for this reaction,
+# and k(308 K) is derived from k(298 K) with a fixed activation energy -- which
+# is exactly the quantity students are asked to recover, so it is deliberately
+# NOT stated here. Work it out from the two rate constants.
+# ---------------------------------------------------------------------------
+_R_GAS = 8.314462618          # J/(mol K)
+
+# (centre cm^-1, height per unit concentration, FWHM cm^-1)
+ANHYDRIDE_BANDS = [
+    (1820, 0.55, 22),         # C=O asymmetric stretch
+    (1750, 0.72, 26),         # C=O symmetric stretch
+]
+ACETIC_ACID_BANDS = [
+    (1710, 0.48, 30),         # C=O stretch of the acid product
+]
+
+
+def _kinetics_frame(wn, extent, drift, rng, noise=1.5e-3):
+    """One ATR spectrum at fractional extent of reaction `extent` (0 -> 1)."""
+    x_anh = 1.0 - extent                       # anhydride remaining
+    c_acid = 2.0 * extent                      # 2 acid per anhydride consumed
+    A = x_anh * absorbance(wn, ANHYDRIDE_BANDS)
+    A = A + c_acid * absorbance(wn, ACETIC_ACID_BANDS)
+    # Thermal/contact drift on the ATR crystal: a slow, slightly CURVED offset
+    # that grows through the run. The curvature is the point -- a straight
+    # baseline drawn locally under one band is a good approximation over
+    # 50 cm^-1, whereas one straight baseline across the whole window is not.
+    # That is why exercise11 has you subtract a LOCAL baseline at every time
+    # point instead of correcting the series once at the start.
+    span = (wn - wn.min()) / np.ptp(wn)
+    A = A + drift * (0.35 + 0.65 * span + 0.5 * span ** 2)
+    return A + rng.normal(0, noise, size=A.shape)
+
+
+def write_kinetics_series(directory, k, t_end, dt, rng, label):
+    """Write one whole time-resolved run into `directory`."""
+    os.makedirs(directory, exist_ok=True)
+    wn = np.arange(1600.0, 1900.0 + 0.5, 0.5)
+    times = np.arange(0.0, t_end + dt, dt)
+
+    rows = []
+    for i, t in enumerate(times):
+        extent = 1.0 - np.exp(-k * t)
+        drift = 0.008 * (t / t_end)            # baseline creeps up over the run
+        A = _kinetics_frame(wn, extent, drift, rng)
+        name = "spec_%03d.dpt" % i
+        np.savetxt(os.path.join(directory, name),
+                   np.column_stack([wn, A]), delimiter=",", fmt="%.8g")
+        rows.append((name, t))
+
+    # The instrument writes a log of when each scan was taken; so do we.
+    with open(os.path.join(directory, "times.csv"), "w") as fh:
+        fh.write("filename,time_s\n")
+        for name, t in rows:
+            fh.write("%s,%.1f\n" % (name, t))
+
+    print("  wrote %s/  (%d spectra + times.csv, %s)"
+          % (directory, len(rows), label))
+
+
 def main():
     rng = np.random.default_rng(42)
 
@@ -244,16 +257,6 @@ def main():
     save_dpt("ethanol_ab.dpt", A[m], x=WN_FULL[m])
     save_dpt("background_ab.dpt", np.zeros(m.sum()), x=WN_FULL[m])
 
-    # ---- Synthetic HCl gas-phase rovibrational spectrum (exercise 8). ----
-    wn_hcl = np.linspace(2600, 3150, 6000)
-    save_dpt("hcl_gas_ab.dpt", hcl_gas_spectrum(wn_hcl), x=wn_hcl)
-    # A second, higher-resolution version in which the Cl-35/Cl-37 doublet is
-    # resolved. Use this ONLY for the advanced isotope question -- fitting it
-    # like the file above, without separating the two progressions first, is
-    # guaranteed to give you a nonsense bond length.
-    save_dpt("hcl_gas_highres_ab.dpt",
-             hcl_gas_spectrum(wn_hcl, linewidth=0.6), x=wn_hcl)
-
     # ---- Polymer reference library + two unknowns (exercise 9). ----
     wn_poly = np.linspace(600, 3200, 5200)
     for name in POLYMER_BANDS:
@@ -274,6 +277,21 @@ def main():
     unknown2 = 0.62 * polymer_spectrum(wn_poly, "PET") + 0.38 * polymer_spectrum(wn_poly, "PE")
     unknown2 = unknown2 + rng.normal(0, 5e-3, size=unknown2.shape)
     save_dpt("polymer_unknown_2.dpt", unknown2, x=wn_poly)
+
+    # ---- Time-resolved ATR kinetics, two temperatures (exercise 11). ----
+    # k at 298 K is a realistic pseudo-first-order rate constant for acetic
+    # anhydride hydrolysis; k at 308 K follows from a fixed activation energy.
+    k_298 = 2.80e-3                    # s^-1
+    e_a = 45.0e3                       # J/mol -- recover this yourself
+    k_308 = k_298 * np.exp(-e_a / _R_GAS * (1 / 308.15 - 1 / 298.15))
+    # Each run is stopped after about 3.5 half-lives, which is what you would
+    # actually do at the bench. Running much longer does not add information:
+    # the band has decayed into the noise, and those points then dominate a
+    # log-linearised fit while carrying almost no signal.
+    write_kinetics_series("kinetics_298K", k_298, t_end=900.0, dt=15.0,
+                          rng=rng, label="25 degC")
+    write_kinetics_series("kinetics_308K", k_308, t_end=500.0, dt=10.0,
+                          rng=rng, label="35 degC")
 
     print("\nDone. You can now run exercise1_interferogram.py")
 
