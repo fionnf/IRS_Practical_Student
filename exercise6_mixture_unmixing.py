@@ -38,6 +38,20 @@ Three functions:
 
     python exercise6_mixture_unmixing.py        <- grade yourself
     python exercise6_mixture_unmixing.py run    <- run it on your data
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section D, Q1 to Q7
+
+    STEP 2, the parity plot            ->  Section D Q1 and Q2
+    STEP 3, the residual               ->  Section D Q3
+    STEP 4, RMS error and the verdict  ->  Section D Q4 and Q7
+    STEP 5, ATR-corrected spectra      ->  Section D Q5
+    the covariance from unmix          ->  Section D Q6
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import numpy as np
@@ -151,10 +165,10 @@ def main():
     # -----------------------------------------------------------------
     # STEP 3  --  Unmix every mixture and compare to the truth.
     #
-    #   Q1. Tabulate: true x1, fitted x1, fitted x2, and (fitted x1 + fitted
+    #   - Tabulate: true x1, fitted x1, fitted x2, and (fitted x1 + fitted
     #       x2). If the mixture were perfectly ideal and your references
     #       perfectly clean, what would you expect x1+x2 to equal?
-    #   Q2. Plot fitted x1 (y-axis) against true x1 (x-axis) for all your
+    #   - Plot fitted x1 (y-axis) against true x1 (x-axis) for all your
     #       mixtures, with a y=x reference line. How linear is it? Fit a line
     #       and report the slope and intercept.
     # -----------------------------------------------------------------
@@ -178,7 +192,7 @@ def main():
     # reconstructed spectrum (x1*A_pure1 + x2*A_pure2), and the residual
     # (measured - reconstructed) on its own axis below.
     #
-    #   Q3. Is the residual flat noise, or does it have real structure (a
+    #   - Is the residual flat noise, or does it have real structure (a
     #       peak or dip at a specific wavenumber)? If it has structure,
     #       suggest a physical cause (e.g. a band-position shift between the
     #       pure and mixed states, a third component, baseline drift between
@@ -189,20 +203,21 @@ def main():
     # -----------------------------------------------------------------
     # STEP 5  --  Connect back to Section D's original question.
     #
-    #   Q4. Section D asked you to compute a single excess spectrum by hand
+    #   - Section D asked you to compute a single excess spectrum by hand
     #       and judge "ideal or not" qualitatively. Using the RMS reconstruction
     #       error across ALL your mixtures from STEP 3, give a QUANTITATIVE
     #       answer: is this pair of xylene isomers well described by an ideal,
     #       purely additive mixture model? At what mole fraction (if any) is
     #       the model worst, and can you suggest why?
-    #   Q5 (challenge). Repeat STEP 3 using the ATR-CORRECTED spectra instead
+    #   - (challenge) Repeat STEP 3 using the ATR-CORRECTED spectra instead
     #       of the raw ones (from Section D part iv). Does ATR correction
     #       improve or worsen the linearity of your parity plot (Q2) and the
     #       reconstruction error (Q4)? What does this tell you about trusting
     #       instrument-applied corrections for quantitative work?
     # -----------------------------------------------------------------
 
-    print("Exercise 6 complete once STEPs 1-5 run and Q1-Q5 are answered.")
+    print("\nDone once STEPs 1-5 run and you have answered\n"
+          "Section D Q1 to Q7 in the manual.")
 
 
 # ---------------------------------------------------------------------------

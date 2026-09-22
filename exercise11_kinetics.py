@@ -36,6 +36,20 @@ and `kinetics_308K/` are not there, they are generated for you the first time
 you run this.
 
 Run with:  python exercise11_kinetics.py
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section E, Q1 to Q5
+
+    STEP 1, overlay the run          ->  Section E Q1
+    STEP 2, the isosbestic point     ->  Section E Q2
+    STEP 3, k and the half-life      ->  Section E Q3
+    STEP 4, residuals and the refit  ->  Section E Q4
+    STEP 5, activation energy        ->  Section E Q5
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import os

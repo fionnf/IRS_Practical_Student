@@ -33,6 +33,18 @@ questions. It exists so you see what an interferogram actually looks like
 before you start transforming one.
 
     python exercise1_interferogram.py run
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section A, Q1  (and Section 0, Q3 on the practice data)
+
+    STEP 2, point counts    ->  Section A Q1
+    STEP 3, the zero burst  ->  Section A Q1; Section 0 Q3
+    STEP 4-5, the plots     ->  supporting figures for Section A Q1
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import numpy as np
@@ -72,8 +84,8 @@ def main():
     # STEP 2  --  Basic sanity checks. Fill in the prints.
     #
     # Questions to note in your report:
-    #   Q1. How many points does each interferogram contain?
-    #   Q2. What is the total optical-path-difference range being sampled?
+    #   - How many points does each interferogram contain?
+    #   - What is the total optical-path-difference range being sampled?
     # -----------------------------------------------------------------
     # TODO: print len(...) of each interferogram
     print("TODO: print how many points each interferogram has")
@@ -81,7 +93,7 @@ def main():
     # -----------------------------------------------------------------
     # STEP 3  --  Find the zero burst of the ethanol reference interferogram.
     #
-    #   Q3. At which index does the zero burst sit? Is it near the start,
+    #   - At which index does the zero burst sit? Is it near the start,
     #       middle, or end of the scan? Why do you think the instrument places
     #       it there?
     # -----------------------------------------------------------------
@@ -95,7 +107,7 @@ def main():
     # a title. Then make a SECOND plot zoomed into +/- 200 points around the
     # zero burst so you can actually see the wiggles of the centre burst.
     #
-    #   Q4. Away from the centre burst the signal looks like almost-flat noise.
+    #   - Away from the centre burst the signal looks like almost-flat noise.
     #       Why does nearly all the spectral information live in that narrow
     #       burst region?
     # -----------------------------------------------------------------
@@ -114,14 +126,15 @@ def main():
     # STEP 5  --  Compare reference vs sample.
     #
     # Overlay the ethanol RIFG and SIFG (zoomed around the burst).
-    #   Q5. The two bursts look almost identical to the eye. If they are so
+    #   - The two bursts look almost identical to the eye. If they are so
     #       similar, where does the chemical information (the sample's
     #       absorption) actually hide? (Hint: think about the *small*
     #       differences and what the FFT in exercise 2 will do with them.)
     # -----------------------------------------------------------------
     # TODO: your comparison plot here
 
-    print("\nExercise 1 complete once every TODO is filled in and every Q is answered.")
+    print("\nDone once this runs and you have answered Section A Q1\n"
+          "in the manual.")
 
 
 if __name__ == "__main__":

@@ -23,6 +23,15 @@ HOW TO WORK ON THIS FILE
 You are allowed to use numpy. You are NOT allowed to import a ready-made
 FT-IR / spectroscopy package that does the work for you: the point of the
 practical is that YOU implement the maths.
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section 0, Q1 and Q2.
+
+    the five self-tests   ->  Section 0 Q1 (paste the passing output)
+    what went wrong       ->  Section 0 Q2 (which function fought you)
+
+Nothing else works until this file does, so start here.
 """
 
 import numpy as np

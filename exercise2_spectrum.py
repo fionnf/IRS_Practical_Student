@@ -21,6 +21,17 @@ spectrum. If irtools passes its self-test, this is mostly plumbing.
 
     python exercise2_spectrum.py        <- grade yourself
     python exercise2_spectrum.py run    <- run it on your data
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section A, Q2  (and the band assignments for Q3)
+
+    STEP 2, your spectrum against the instrument's  ->  Section A Q2
+    STEP 3, naming the bands you see                ->  Section A Q3
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import numpy as np
@@ -81,7 +92,7 @@ def main():
     # Convention: IR spectra run with wavenumber DECREASING left-to-right,
     # so set plt.xlim(4000, 500). Plot T in percent.
     #
-    #   Q1. Identify the strong dip near ~3300 cm^-1 and the group of dips
+    #   - Identify the strong dip near ~3300 cm^-1 and the group of dips
     #       near 2900 cm^-1. Which bonds in ethanol do they correspond to?
     # -----------------------------------------------------------------
     plt.figure(figsize=(8, 4))
@@ -98,7 +109,7 @@ def main():
     # -----------------------------------------------------------------
     # STEP 4  --  Plot the absorbance spectrum.
     #
-    #   Q2. Absorbance and transmittance carry the same information. Why do
+    #   - Absorbance and transmittance carry the same information. Why do
     #       chemists usually prefer absorbance for quantitative work?
     #       (Think back to the Beer-Lambert law.)
     # -----------------------------------------------------------------
@@ -111,14 +122,15 @@ def main():
     # the absorbance the Bruker software computed. Overlay it on YOUR
     # absorbance curve.
     #
-    #   Q3. Do the peak POSITIONS match? Do the peak HEIGHTS match?
-    #   Q4. List two reasons your curve might differ from the instrument's
+    #   - Do the peak POSITIONS match? Do the peak HEIGHTS match?
+    #   - List two reasons your curve might differ from the instrument's
     #       (hint: apodization and phase correction -- more in exercise 4).
     # -----------------------------------------------------------------
     # TODO: e_ab = ir.load_dpt("ethanol_ab.dpt", column=None)
     # TODO: overlay plot of your A vs e_ab
 
-    print("Exercise 2 complete once the pipeline runs and Q1-Q4 are answered.")
+    print("\nDone once this runs and you have answered Section A Q2\n"
+          "(and the band names for Q3) in the manual.")
 
 
 # ---------------------------------------------------------------------------

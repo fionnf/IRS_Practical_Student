@@ -25,6 +25,19 @@ You will use these functions in your OWN reports wherever you report a
 number with real experimental data behind it -- not just in this file.
 
 Run with:  python exercise7_uncertainty.py
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section A, Q10, Q11 and Q12 directly. After that it is used, rather than
+answered, nearly everywhere else.
+
+    confidence_interval_95        ->  Section A Q11 and Q12
+    linregress_with_uncertainty   ->  Section A Q10; Section B Q1; Section D Q6
+    propagate_product / _power    ->  Section A Q10; Section E Q3
+    welch_t_test                  ->  Section A Q10 and Q12
+
+Every physical quantity you quote anywhere in the report needs an uncertainty
+from this file, so finish it early: Sections B, D, E, G and H all lean on it.
 """
 
 import numpy as np

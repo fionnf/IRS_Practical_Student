@@ -22,6 +22,18 @@ Three short functions, in this order:
 
     python exercise3_peaks.py        <- grade yourself
     python exercise3_peaks.py run    <- run it on your data
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section A, Q3 and Q8.  Reused in Sections B, G and H
+
+    baseline_correct + find_bands + assign  ->  Section A Q3
+    the Savitzky-Golay smoothing step       ->  Section A Q8
+    reused for band areas and widths        ->  Sections G Q2, G Q3, H Q1
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import numpy as np
@@ -126,7 +138,7 @@ def main():
 
     # -----------------------------------------------------------------
     # STEP 2  --  Baseline correction. Plot before vs after.
-    #   Q1. What artefacts in the raw absorbance did the baseline correction
+    #   - What artefacts in the raw absorbance did the baseline correction
     #       remove? Did it distort any real peaks?
     # -----------------------------------------------------------------
     A_bc = baseline_correct(wn, A)
@@ -134,7 +146,7 @@ def main():
 
     # -----------------------------------------------------------------
     # STEP 3  --  Peak detection. Mark the peaks on the plot.
-    #   Q2. How sensitive is the peak list to your `height`/`distance`
+    #   - How sensitive is the peak list to your `height`/`distance`
     #       choices? Give the values you settled on and why.
     # -----------------------------------------------------------------
     peak_wn, peak_A = find_bands(wn, A_bc, height=None, distance=None)
@@ -142,7 +154,7 @@ def main():
 
     # -----------------------------------------------------------------
     # STEP 4  --  Assign the peaks.
-    #   Q3. Produce a table: peak position -> assigned group. Are all of
+    #   - Produce a table: peak position -> assigned group. Are all of
     #       ethanol's expected bands present (O-H, C-H, C-O)? Any unexpected
     #       peaks, e.g. atmospheric CO2 near 2350 cm^-1 or water vapour?
     # -----------------------------------------------------------------
@@ -155,12 +167,13 @@ def main():
     # If you have a second sample's data (e.g. acetone: has a strong C=O near
     # 1715 cm^-1 that ethanol lacks), run it through the same pipeline and
     # plot both spectra stacked.
-    #   Q4. Name one band that lets you tell the two substances apart at a
+    #   - Name one band that lets you tell the two substances apart at a
     #       glance, and say which bond it belongs to.
     # -----------------------------------------------------------------
     # TODO (optional): repeat for a second sample and overlay.
 
-    print("\nExercise 3 complete once the assignment table prints and Q1-Q4 are answered.")
+    print("\nDone once this runs and you have answered Section A Q3 and Q8\n"
+          "in the manual.")
 
 
 # ---------------------------------------------------------------------------

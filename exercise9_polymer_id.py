@@ -41,6 +41,18 @@ Section C, and build your library from the reference polymers available in
 the lab.
 
 Run with:  python exercise9_polymer_id.py
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section C, Q1 to Q6
+
+    STEP 1-4, library search and residual re-search  ->  Section C Q1
+    STEP 5, penetration depth                        ->  Section C Q2, Q3 and Q4
+    STEP 6, PE crystallinity                         ->  Section C Q5 and Q6
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import numpy as np
@@ -242,10 +254,10 @@ def main():
 
     # -----------------------------------------------------------------
     # STEP 2 -- Identify unknown 1.
-    #   Q1. Report the full ranked hit list, not just the winner. How much
+    #   - Report the full ranked hit list, not just the winner. How much
     #       better is the top hit than the runner-up? Would you be confident
     #       reporting this identification to Security?
-    #   Q2. Re-run the search WITHOUT mean-centring in `preprocess` (i.e. skip
+    #   - Re-run the search WITHOUT mean-centring in `preprocess` (i.e. skip
     #       the baseline removal). Does the ranking change? Unknown 1 has a
     #       deliberate sloping baseline -- explain what you observe.
     # -----------------------------------------------------------------
@@ -254,7 +266,7 @@ def main():
 
     # -----------------------------------------------------------------
     # STEP 3 -- Identify unknown 2.
-    #   Q3. Report the ranked hit list. The top hit will look convincing.
+    #   - Report the ranked hit list. The top hit will look convincing.
     #       Compare its score with the top score you got for unknown 1 --
     #       what does the difference suggest?
     # -----------------------------------------------------------------
@@ -267,10 +279,10 @@ def main():
     # Subtract the best match with `subtract_best_match`, then search the
     # RESIDUAL against the library again, and plot residual vs the new best
     # reference.
-    #   Q4. For unknown 1 the residual should be unstructured noise. For
+    #   - For unknown 1 the residual should be unstructured noise. For
     #       unknown 2 it should not. What is unknown 2, and what does that
     #       tell you about trusting a single top-hit score?
-    #   Q5. Relate this back to Section C task (v): if one of your real films
+    #   - Relate this back to Section C task (v): if one of your real films
     #       is a laminate, does the same residual test identify its layers?
     #       Does it work equally well on your ATR and transmission spectra of
     #       that film -- and if not, use your Part B penetration depths to
@@ -280,10 +292,10 @@ def main():
 
     # -----------------------------------------------------------------
     # STEP 5 -- ATR penetration depth (Section C, Q2-Q4).
-    #   Q6. Using YOUR accessory's crystal index and angle, tabulate d_p at
+    #   - Using YOUR accessory's crystal index and angle, tabulate d_p at
     #       3000, 1500 and 700 cm^-1. By what factor does it change across
     #       your spectrum?
-    #   Q7. Plot d_p against wavenumber over your whole measured range. Mark
+    #   - Plot d_p against wavenumber over your whole measured range. Mark
     #       the thickness of a typical film layer on the same axes. Over what
     #       part of the spectrum is your measurement sampling the WHOLE
     #       layer, and where is it only sampling the surface?
@@ -293,17 +305,18 @@ def main():
 
     # -----------------------------------------------------------------
     # STEP 6 -- Crystallinity (Section C, Q5-Q6), if you have a PE film.
-    #   Q8. Report the crystallinity index for each PE-like film you measured.
+    #   - Report the crystallinity index for each PE-like film you measured.
     #       If you have more than one, rank them and check the ranking against
     #       the films' physical stiffness/opacity.
-    #   Q9. Estimate the uncertainty on your index: repeat the measurement on
+    #   - Estimate the uncertainty on your index: repeat the measurement on
     #       3 spots of the same film and use `confidence_interval_95` from
     #       exercise7. Is the DIFFERENCE between two films larger than that
     #       uncertainty -- i.e. is the ranking in Q8 statistically real?
     # -----------------------------------------------------------------
     # TODO: your crystallinity analysis here
 
-    print("Exercise 9 complete once STEPs 1-6 run and Q1-Q9 are answered.")
+    print("\nDone once STEPs 1-6 run and you have answered\n"
+          "Section C Q1 to Q6 in the manual.")
 
 
 # ---------------------------------------------------------------------------

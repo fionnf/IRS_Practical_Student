@@ -27,6 +27,18 @@ Three short functions, then three numerical experiments that use them:
 
     python exercise4_resolution.py        <- grade yourself
     python exercise4_resolution.py run    <- run the experiments
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section A, Q4, Q5 and Q6
+
+    Experiment A, window length  ->  Section A Q4
+    Experiment B, apodization    ->  Section A Q5
+    Experiment C, zero-filling   ->  Section A Q6
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import numpy as np
@@ -126,9 +138,9 @@ def main():
     # transmittance each time and overlay the spectra (zoom into a region with
     # close peaks, e.g. 2800-3050 cm^-1).
     #
-    #   Q1. As N increases, what happens to the linewidths and to your ability
+    #   - As N increases, what happens to the linewidths and to your ability
     #       to separate neighbouring bands?
-    #   Q2. FT-IR resolution (cm^-1) is roughly 1 / (max optical path
+    #   - FT-IR resolution (cm^-1) is roughly 1 / (max optical path
     #       difference). Explain qualitatively why a longer window = better
     #       resolution, in terms of how far the mirror travels.
     # -----------------------------------------------------------------
@@ -155,7 +167,7 @@ def main():
     # Fix N (say 2**12). For each kind in ["boxcar","triangular","hann",
     # "blackman"]: apodize BOTH windows, compute transmittance, overlay.
     #
-    #   Q3. Which apodization gives the sharpest peaks? Which gives the least
+    #   - Which apodization gives the sharpest peaks? Which gives the least
     #       ringing (fewest negative side-lobes around strong bands)? Describe
     #       the trade-off in one sentence.
     # -----------------------------------------------------------------
@@ -182,14 +194,15 @@ def main():
     # spectrum with no zero-fill and with factor=4, and overlay them on a
     # narrow zoom. Use markers ('o-') so you can see individual points.
     #
-    #   Q4. Zero-filling makes the curve look smoother. Did it actually improve
+    #   - Zero-filling makes the curve look smoother. Did it actually improve
     #       the true RESOLUTION (your ability to separate two real peaks), or
     #       only the sampling of the curve? Justify using what you saw in
     #       Experiment A.
     # -----------------------------------------------------------------
     # TODO: implement the zero-fill comparison
 
-    print("Exercise 4 complete once experiments A-C run and Q1-Q4 are answered.")
+    print("\nDone once experiments A-C run and you have answered\n"
+          "Section A Q4, Q5 and Q6 in the manual.")
 
 
 # ---------------------------------------------------------------------------
