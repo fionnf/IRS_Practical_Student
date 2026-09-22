@@ -1,3 +1,4 @@
 numpy
 matplotlib
 scipy
+brukeropus        # only for bruker_to_dpt.py, which reads the instrument's raw OPUS files
