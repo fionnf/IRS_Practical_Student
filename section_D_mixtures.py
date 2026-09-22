@@ -26,7 +26,7 @@ You need real data for this: your own two pure-isomer ATR absorbance spectra
 and your five (or more) mixture spectra from Section D, as ``.dpt`` files
 (wavenumber, absorbance).
 
-Run with:  python exercise6_mixture_unmixing.py
+Run with:  python section_D_mixtures.py
 
 WHAT YOU DO IN THIS FILE
 ------------------------
@@ -36,8 +36,8 @@ Three functions:
     unmix(...)                 least squares for the mixing fractions
     reconstruction_error(...)  how well the fit reproduces the mixture
 
-    python exercise6_mixture_unmixing.py        <- grade yourself
-    python exercise6_mixture_unmixing.py run    <- run it on your data
+    python section_D_mixtures.py        <- grade yourself
+    python section_D_mixtures.py run    <- run it on your data
 
 WHICH QUESTIONS THIS ANSWERS
 ----------------------------
@@ -57,38 +57,34 @@ those are now plain bullets under each step.
 import numpy as np
 import matplotlib.pyplot as plt
 
-import irtools as ir
 
 
-def common_grid(wn_a, a, wn_b, b, wn_lo=650, wn_hi=1500, n=2000):
-    """Resample two spectra (a on wn_a, b on wn_b) onto the SAME wavenumber grid.
+# ---------------------------------------------------------------------------
+# Reading a .dpt file -- WRITTEN FOR YOU
+# ---------------------------------------------------------------------------
+def load_dpt(path, column=1):
+    """Load one column from a Bruker ``.dpt`` file (comma-separated text).
 
-    Real spectra from different scans rarely share an identical wavenumber
-    axis. Before you can add/combine spectra point-by-point you must put them
-    on a common grid by interpolation.
-
-    Parameters
-    ----------
-    wn_a, a : ndarray   first spectrum's wavenumber axis and absorbance.
-    wn_b, b : ndarray   second spectrum's wavenumber axis and absorbance.
-    wn_lo, wn_hi : float   range to keep (choose a region with informative,
-        non-saturated bands -- e.g. the aromatic/substitution region for
-        xylenes, roughly 650-900 cm^-1, or widen if you want more bands).
-    n : int   number of points in the common grid.
-
-    Returns
-    -------
-    wn : ndarray, length n       the common grid.
-    a_i, b_i : ndarray, length n  both spectra resampled onto it.
-
-    Hints
-    -----
-    * ``np.linspace(wn_lo, wn_hi, n)`` builds the common grid.
-    * ``np.interp(x_new, x_old, y_old)`` requires ``x_old`` sorted ascending;
-      flip your arrays first if your wavenumber axis runs high to low.
+    ``column=0`` gives the wavenumbers, ``column=1`` the values, and
+    ``column=None`` gives both as a 2-D array.
     """
-    # TODO: build wn, then np.interp both spectra onto it (mind sort order!)
-    raise NotImplementedError("common_grid")
+    data = np.loadtxt(path, delimiter=",")
+    if column is None:
+        return data
+    return data[:, column]
+
+
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
+def common_grid(wn_a, a, wn_b, b, wn_lo=650, wn_hi=1500, n=2000):
+    wn = np.linspace(wn_lo, wn_hi, n)
+
+    def sorted_interp(x_new, x_old, y_old):
+        order = np.argsort(x_old)
+        return np.interp(x_new, x_old[order], y_old[order])
+
+    a_i = sorted_interp(wn, wn_a, a)
+    b_i = sorted_interp(wn, wn_b, b)
+    return wn, a_i, b_i
 
 
 def unmix(A_mixture, A_pure1, A_pure2):
@@ -119,20 +115,10 @@ def unmix(A_mixture, A_pure1, A_pure2):
     raise NotImplementedError("unmix")
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def reconstruction_error(A_mixture, A_pure1, A_pure2, x1, x2):
-    """Root-mean-square residual between the measured and reconstructed spectrum.
-
-    A small residual supports the "ideal, additive mixture" hypothesis; a
-    large, structured residual (e.g. a residual peak at a specific
-    wavenumber) suggests a real interaction, an impurity, or a bad pure-
-    component reference.
-
-    Returns
-    -------
-    float   RMS of (A_mixture - (x1*A_pure1 + x2*A_pure2)).
-    """
-    # TODO: compute and return the RMS residual
-    raise NotImplementedError("reconstruction_error")
+    recon = x1 * A_pure1 + x2 * A_pure2
+    return np.sqrt(np.mean((A_mixture - recon) ** 2))
 
 
 def main():
@@ -142,7 +128,7 @@ def main():
     # Replace the filenames with your own Section-D absorbance files
     # (wavenumber, absorbance -- two columns, so column=None).
     # -----------------------------------------------------------------
-    wn1 = A1 = None   # TODO: wn1, A1 = ir.load_dpt("pure_isomer1_ab.dpt", column=None).T
+    wn1 = A1 = None   # TODO: wn1, A1 = load_dpt("pure_isomer1_ab.dpt", column=None).T
     wn2 = A2 = None   # TODO: same for pure_isomer2_ab.dpt
     if wn1 is None:
         raise SystemExit("Load your two pure-component reference spectra first.")
@@ -174,7 +160,7 @@ def main():
     # -----------------------------------------------------------------
     true_x1, fitted_x1, fitted_x2, rms_err = [], [], [], []
     for path, x1_true in mixture_files:
-        # TODO: wn_m, A_m = ir.load_dpt(path, column=None).T
+        # TODO: wn_m, A_m = load_dpt(path, column=None).T
         # TODO: wn_g, a1_g, a2_g = common_grid(wn1, A1, wn2, A2)  # then also
         #       resample A_m onto wn_g (reuse np.interp directly, or extend
         #       common_grid to take a third spectrum -- your choice)
@@ -221,7 +207,7 @@ def main():
 
 
 # ---------------------------------------------------------------------------
-# Self-tests -- run `python exercise6_mixture_unmixing.py` to grade yourself.
+# Self-tests -- run `python section_D_mixtures.py` to grade yourself.
 # Do not modify below this line.
 # ---------------------------------------------------------------------------
 def _report(name, ok, msg=""):
@@ -231,22 +217,8 @@ def _report(name, ok, msg=""):
 
 
 def _selftest():
-    print("Running exercise6 self-tests...\n")
+    print("Running Section D self-tests...\n")
     results = []
-    # both spectra must land on one shared axis
-    try:
-        wn_a = np.linspace(600, 1600, 900)
-        wn_b = np.linspace(650, 1550, 700)
-        a = np.exp(-((wn_a - 1000) / 40.0) ** 2)
-        b = np.exp(-((wn_b - 1300) / 40.0) ** 2)
-        wn, ai, bi = common_grid(wn_a, a, wn_b, b, wn_lo=700, wn_hi=1500, n=500)
-        ok = (len(wn) == len(ai) == len(bi) == 500
-              and np.all(np.diff(wn) > 0) and wn[0] >= 700 and wn[-1] <= 1500)
-        results.append(_report("common_grid", ok, "expected three arrays of length n, on an ascending axis"))
-    except NotImplementedError:
-        results.append(_report("common_grid", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("common_grid", False, f"raised {e!r}"))
 
     # an exact mixture of two knowns must give its own coefficients back
     try:
@@ -261,26 +233,11 @@ def _selftest():
     except Exception as e:
         results.append(_report("unmix", False, f"raised {e!r}"))
 
-    # a perfect reconstruction has no error left over
-    try:
-        wn = np.linspace(600, 1600, 1000)
-        p1 = np.exp(-((wn - 900) / 30.0) ** 2)
-        p2 = np.exp(-((wn - 1300) / 30.0) ** 2)
-        mix = 0.3 * p1 + 0.7 * p2
-        exact = reconstruction_error(mix, p1, p2, 0.3, 0.7)
-        wrong = reconstruction_error(mix, p1, p2, 0.6, 0.4)
-        ok = (exact < 1e-9 and wrong > exact)
-        results.append(_report("reconstruction_error", ok, "should be ~0 for an exact fit, and grow when the fit is wrong"))
-    except NotImplementedError:
-        results.append(_report("reconstruction_error", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("reconstruction_error", False, f"raised {e!r}"))
-
 
     passed = sum(bool(r) for r in results)
     print(f"\n{passed}/{len(results)} checks passed.")
     if passed == len(results):
-        print("All good -- now run:  python exercise6_mixture_unmixing.py run")
+        print("All good -- now run:  python section_D_mixtures.py run")
     else:
         print("Keep going: fix the FAIL items above, then re-run.")
 
@@ -292,4 +249,4 @@ if __name__ == "__main__":
         main()
     else:
         _selftest()
-        print("\nTo run the analysis on your own data:  python exercise6_mixture_unmixing.py run")
+        print("\nTo run the analysis on your own data:  python section_D_mixtures.py run")

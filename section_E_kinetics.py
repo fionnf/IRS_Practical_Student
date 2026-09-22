@@ -28,14 +28,14 @@ each one feeds the next.
 
 Before you start
 -----------------
-Finish `exercise7_uncertainty.py` first: `fit_first_order` uses its
+Finish `uncertainty.py` first: `fit_first_order` uses its
 regression routine, so this file will not work until that one does.
 
 You need no data of your own to practise. If the folders `kinetics_298K/`
 and `kinetics_308K/` are not there, they are generated for you the first time
 you run this.
 
-Run with:  python exercise11_kinetics.py
+Run with:  python section_E_kinetics.py
 
 WHICH QUESTIONS THIS ANSWERS
 ----------------------------
@@ -57,8 +57,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import irtools as ir
-import exercise7_uncertainty as unc
+import uncertainty as unc
 
 # Band windows for this reaction, in cm^-1. Adjust them to YOUR spectra: these
 # are sensible starting values, not gospel.
@@ -70,44 +69,46 @@ ISOSBESTIC_WINDOW = (1710, 1760)
 
 
 # ---------------------------------------------------------------------------
+# Reading a .dpt file -- WRITTEN FOR YOU
+# ---------------------------------------------------------------------------
+def load_dpt(path, column=1):
+    """Load one column from a Bruker ``.dpt`` file (comma-separated text).
+
+    ``column=0`` gives the wavenumbers, ``column=1`` the values, and
+    ``column=None`` gives both as a 2-D array.
+    """
+    data = np.loadtxt(path, delimiter=",")
+    if column is None:
+        return data
+    return data[:, column]
+
+
+# ---------------------------------------------------------------------------
 # 1. Loading a whole run
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def load_series(folder):
-    """Load one time-resolved run from ``folder``.
+    """Load one time-resolved run from ``folder``."""
+    names, times = [], []
+    with open(os.path.join(folder, "times.csv"), encoding="utf-8") as fh:
+        next(fh)                                   # skip the header line
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            name, t = line.split(",")
+            names.append(name)
+            times.append(float(t))
 
-    The folder holds one ``.dpt`` file per time point plus a ``times.csv``
-    listing them, which is what the instrument writes out:
+    spectra = []
+    wn = None
+    for name in names:
+        both = load_dpt(os.path.join(folder, name), column=None)
+        if wn is None:
+            wn = both[:, 0]
+        spectra.append(both[:, 1])
 
-        filename,time_s
-        spec_000.dpt,0.0
-        spec_001.dpt,15.0
-
-    Reading the times from that file rather than assuming a constant interval
-    matters, because acquisition is never perfectly periodic.
-
-    Parameters
-    ----------
-    folder : str
-        Directory containing the run.
-
-    Returns
-    -------
-    wn : ndarray, shape (n_points,)
-        Wavenumber axis, taken from the first file.
-    A : ndarray, shape (n_times, n_points)
-        Absorbance, one ROW per time point.
-    t : ndarray, shape (n_times,)
-        Acquisition time in seconds.
-
-    Hints
-    -----
-    * Read ``times.csv`` with the standard library: skip the header line, then
-      split each remaining line on the comma.
-    * ``ir.load_dpt(path, column=None)`` gives you both columns of a file.
-    * ``np.vstack`` stacks a list of 1-D spectra into the 2-D array you want.
-    """
-    # TODO: implement me
-    raise NotImplementedError("load_series")
+    return wn, np.vstack(spectra), np.array(times)
 
 
 # ---------------------------------------------------------------------------
@@ -156,15 +157,10 @@ def band_area(wn, A, lo, hi):
 # ---------------------------------------------------------------------------
 # 3. That band, at every time point
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def area_series(wn, A, lo, hi):
-    """Apply :func:`band_area` to every row of ``A``.
-
-    Returns a 1-D array of areas, one per time point, in the same order as the
-    rows. This is a two-line function; a list comprehension over the rows and
-    ``np.array`` around it is the whole thing.
-    """
-    # TODO: implement me
-    raise NotImplementedError("area_series")
+    """:func:`band_area` applied to every row of ``A``."""
+    return np.array([band_area(wn, row, lo, hi) for row in np.asarray(A)])
 
 
 # ---------------------------------------------------------------------------
@@ -327,7 +323,7 @@ def main():
 
 
 # ---------------------------------------------------------------------------
-# Self-tests -- run `python exercise11_kinetics.py` to grade yourself.
+# Self-tests -- run `python section_E_kinetics.py` to grade yourself.
 # Do not modify below this line.
 # ---------------------------------------------------------------------------
 def _report(name, ok, msg=""):
@@ -337,23 +333,8 @@ def _report(name, ok, msg=""):
 
 
 def _selftest():
-    print("Running exercise11 self-tests...\n")
+    print("Running Section E self-tests...\n")
     results = []
-
-    # load_series: on the practice run, which is generated if absent
-    try:
-        if not os.path.isdir("kinetics_298K"):
-            import generate_demo_data
-            generate_demo_data.main()
-        wn, A, t = load_series("kinetics_298K")
-        ok = (A.ndim == 2 and A.shape[0] == len(t) == 61
-              and A.shape[1] == len(wn) and t[0] == 0.0 and t[1] == 15.0)
-        results.append(_report("load_series", ok,
-                               "expected 61 spectra with t = 0, 15, 30, ... s"))
-    except NotImplementedError:
-        results.append(_report("load_series", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("load_series", False, f"raised {e!r}"))
 
     # band_area: a triangle of known area sitting on a sloping baseline
     try:
@@ -383,20 +364,6 @@ def _selftest():
     except Exception as e:
         results.append(_report("band_area (descending axis)", False,
                                f"raised {e!r}"))
-
-    # area_series: three identical rows must give three identical areas
-    try:
-        wn = np.linspace(1600, 1800, 401)
-        peak = np.clip(1.0 - np.abs(wn - 1700) / 50.0, 0, None)
-        A = np.vstack([peak, 0.5 * peak, 0.25 * peak])
-        got = area_series(wn, A, 1650, 1750)
-        ok = (len(got) == 3 and np.allclose(got, [50.0, 25.0, 12.5], rtol=0.02))
-        results.append(_report("area_series", ok,
-                               "areas should scale with the rows: 50, 25, 12.5"))
-    except NotImplementedError:
-        results.append(_report("area_series", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("area_series", False, f"raised {e!r}"))
 
     # fit_first_order on a clean exponential
     try:
@@ -462,4 +429,4 @@ if __name__ == "__main__":
         main()
     else:
         _selftest()
-        print("\nTo run the analysis on your own data:  python exercise11_kinetics.py run")
+        print("\nTo run the analysis on your own data:  python section_E_kinetics.py run")

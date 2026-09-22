@@ -24,9 +24,14 @@ decisions you have to make in your report:
 You will use these functions in your OWN reports wherever you report a
 number with real experimental data behind it -- not just in this file.
 
-Run with:  python exercise7_uncertainty.py
+Run with:  python uncertainty.py
 
-WHICH QUESTIONS THIS ANSWERS
+WRITTEN FOR YOU -- NOTHING TO IMPLEMENT
+---------------------------------------
+This is a library the section scripts call, not an exercise. Read the
+functions so you know what the numbers you quote actually mean.
+
+WHICH QUESTIONS IT SERVES
 ----------------------------
 Section A, Q10, Q11 and Q12 directly. After that it is used, rather than
 answered, nearly everywhere else.
@@ -83,8 +88,12 @@ def confidence_interval_95(values):
       (only works for n <= 11 here; that covers everything in this
       practical).
     """
-    # TODO: implement using T_TABLE_95
-    raise NotImplementedError("confidence_interval_95")
+    values = np.asarray(values, dtype=float)
+    n = len(values)
+    mean = np.mean(values)
+    sem = np.std(values, ddof=1) / np.sqrt(n)
+    half_width = T_TABLE_95[n - 1] * sem
+    return mean, half_width
 
 
 # ---------------------------------------------------------------------------
@@ -118,10 +127,11 @@ def propagate_product(values, uncertainties):
     -----
     * Build the array of (sigma_xi/xi), square it, sum, sqrt.
     """
-    # TODO: implement the quadrature sum of relative uncertainties
-    raise NotImplementedError("propagate_product")
+    rel = np.array([u / v for v, u in zip(values, uncertainties)])
+    return np.sqrt(np.sum(rel ** 2))
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def propagate_power(rel_uncertainty_x, power):
     """Relative uncertainty when a quantity is raised to a power.
 
@@ -134,13 +144,13 @@ def propagate_power(rel_uncertainty_x, power):
     -------
     float
     """
-    # TODO: implement
-    raise NotImplementedError("propagate_power")
+    return abs(power) * rel_uncertainty_x
 
 
 # ---------------------------------------------------------------------------
 # 3. Weighted/simple linear regression WITH uncertainties on slope/intercept
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def linregress_with_uncertainty(x, y):
     """Ordinary least-squares fit y = m*x + b, with standard errors on m, b.
 
@@ -174,8 +184,16 @@ def linregress_with_uncertainty(x, y):
     ``scipy.stats.linregress``, which you may use to CHECK your answer, but
     implement the formulas yourself first).
     """
-    # TODO: implement steps 1-5
-    raise NotImplementedError("linregress_with_uncertainty")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    n = len(x)
+    m, b = np.polyfit(x, y, 1)
+    resid = y - (m * x + b)
+    s2 = np.sum(resid ** 2) / (n - 2)
+    se_m = np.sqrt(s2 / np.sum((x - np.mean(x)) ** 2))
+    se_b = se_m * np.sqrt(np.sum(x ** 2) / n)
+    return {"slope": float(m), "intercept": float(b),
+            "slope_err": float(se_m), "intercept_err": float(se_b)}
 
 
 # ---------------------------------------------------------------------------
@@ -217,98 +235,12 @@ def welch_t_test(mean1, sem1, n1, mean2, sem2, n2):
     * Return both in one dict, so a caller cannot use the verdict while
       silently ignoring the number.
     """
-    # TODO: implement
-    raise NotImplementedError("welch_t_test")
+    t = (mean1 - mean2) / np.sqrt(sem1 ** 2 + sem2 ** 2)
+    return {"t": float(t),
+            "verdict": ("likely real difference" if abs(t) > 2
+                        else "consistent with noise")}
 
-
-# ---------------------------------------------------------------------------
-# Self-tests -- run `python exercise7_uncertainty.py` to grade yourself.
-# Do not modify below this line.
-# ---------------------------------------------------------------------------
-def _report(name, ok, msg=""):
-    tick = "PASS" if ok else "FAIL"
-    print(f"[{tick}] {name}" + (f"  --  {msg}" if msg and not ok else ""))
-    return ok
-
-
-def _selftest():
-    print("Running exercise7 self-tests...\n")
-    results = []
-
-    try:
-        vals = [10.1, 9.8, 10.3]
-        mean, hw = confidence_interval_95(vals)
-        expected_mean = np.mean(vals)
-        expected_sem = np.std(vals, ddof=1) / np.sqrt(3)
-        expected_hw = 4.303 * expected_sem
-        ok = np.isclose(mean, expected_mean) and np.isclose(hw, expected_hw, rtol=1e-3)
-        results.append(_report("confidence_interval_95", ok, "check t-table lookup and sem formula"))
-    except NotImplementedError:
-        results.append(_report("confidence_interval_95", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("confidence_interval_95", False, f"raised {e!r}"))
-
-    try:
-        rel = propagate_product([2.0, 5.0], [0.1, 0.2])
-        expected = np.sqrt((0.1/2.0)**2 + (0.2/5.0)**2)
-        ok = np.isclose(rel, expected)
-        results.append(_report("propagate_product", ok, "quadrature sum wrong"))
-    except NotImplementedError:
-        results.append(_report("propagate_product", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("propagate_product", False, f"raised {e!r}"))
-
-    try:
-        rel2 = propagate_power(0.05, 2)
-        ok = np.isclose(rel2, 0.10)
-        results.append(_report("propagate_power", ok, "should scale by |power|"))
-    except NotImplementedError:
-        results.append(_report("propagate_power", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("propagate_power", False, f"raised {e!r}"))
-
-    try:
-        rng = np.random.default_rng(0)
-        x = np.linspace(0, 10, 20)
-        y_true = 2.5 * x + 1.0
-        y = y_true + rng.normal(0, 0.3, size=x.shape)
-        fit = linregress_with_uncertainty(x, y)
-        m, b, se_m, se_b = (fit["slope"], fit["intercept"],
-                            fit["slope_err"], fit["intercept_err"])
-        try:
-            from scipy import stats
-            ref = stats.linregress(x, y)
-            ok = (np.isclose(m, ref.slope, rtol=1e-6) and np.isclose(b, ref.intercept, rtol=1e-6)
-                  and np.isclose(se_m, ref.stderr, rtol=1e-3))
-        except ImportError:
-            ok = np.isclose(m, 2.5, atol=0.3) and se_m > 0 and se_b > 0
-        results.append(_report("linregress_with_uncertainty", ok, "compare against scipy.stats.linregress"))
-    except NotImplementedError:
-        results.append(_report("linregress_with_uncertainty", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("linregress_with_uncertainty", False, f"raised {e!r}"))
-
-    try:
-        r1 = welch_t_test(10.0, 0.5, 3, 10.1, 0.5, 3)
-        r2 = welch_t_test(10.0, 0.1, 3, 15.0, 0.1, 3)
-        t1, t2 = r1["t"], r2["t"]
-        verdicts_ok = (r1["verdict"] == "consistent with noise"
-                       and r2["verdict"] == "likely real difference")
-        ok = (abs(t1) < 2) and (abs(t2) > 2)
-        results.append(_report("welch_t_test", ok and verdicts_ok,
-                               "check the formula, and that verdict follows |t| > 2"))
-    except NotImplementedError:
-        results.append(_report("welch_t_test", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("welch_t_test", False, f"raised {e!r}"))
-
-    passed = sum(bool(r) for r in results)
-    print(f"\n{passed}/{len(results)} checks passed.")
-    if passed == len(results):
-        print("All good -- use these functions in your report wherever you quote an uncertainty.")
-    else:
-        print("Keep going: fix the FAIL items above, then re-run.")
 
 
 if __name__ == "__main__":
-    _selftest()
+    print(__doc__)

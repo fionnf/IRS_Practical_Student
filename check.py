@@ -31,27 +31,22 @@ import sys
 # Almost everything grades itself now; exercise 1 has nothing to implement
 # and exercise 5 is optional, so those two are the only "report" entries.
 EXERCISES = [
-    ("irtools.py", "selftest", "Your FT-IR toolkit -- everything else imports it"),
-    ("exercise1_interferogram.py", "report", "Load and explore the interferograms"),
-    ("exercise2_spectrum.py", "selftest", "Interferogram to spectrum, validated"),
-    ("exercise3_peaks.py", "selftest", "Baseline, peak finding, assignment"),
-    ("exercise4_resolution.py", "selftest", "Resolution, apodization, zero-filling"),
-    ("exercise5_simulation.py", "report", "Simulate a spectrometer end to end"),
-    ("exercise6_mixture_unmixing.py", "selftest", "Least-squares mixture unmixing"),
-    ("exercise7_uncertainty.py", "selftest", "Uncertainty toolkit -- used everywhere"),
-    ("exercise9_polymer_id.py", "selftest", "Library matching and ATR depth"),
-    ("exercise10_normalmodes.py", "selftest", "GF-matrix normal modes"),
-    ("exercise11_kinetics.py", "selftest", "Real-time kinetics on the ATR"),
+    ("section_A_basics.py", "selftest", "Section A -- interferogram to spectrum, peaks, resolution"),
+    ("section_C_polymers.py", "selftest", "Section C -- library matching and ATR depth"),
+    ("section_D_mixtures.py", "selftest", "Section D -- least-squares mixture unmixing"),
+    ("section_E_kinetics.py", "selftest", "Section E -- real-time kinetics on the ATR"),
+    ("section_F_normalmodes.py", "selftest", "Section F -- GF-matrix normal modes"),
 ]
+
 
 REQUIRED_PACKAGES = ["numpy", "scipy", "matplotlib"]
 
 # A representative file per data group, with the reason you need it.
 DATA_GROUPS = [
-    ("background_rifg.dpt", "interferograms (exercises 1-4)"),
-    ("ethanol_ab.dpt", "reference absorbance to validate against (exercise 2)"),
-    ("kinetics_298K/times.csv", "time-resolved kinetics run (exercise 11)"),
-    ("polymer_ref_PE.dpt", "polymer library (exercise 9)"),
+    ("background_rifg.dpt", "interferograms (Section A)"),
+    ("ethanol_ab.dpt", "reference absorbance to validate against (Section A)"),
+    ("kinetics_298K/times.csv", "time-resolved kinetics run (Section E)"),
+    ("polymer_ref_PE.dpt", "polymer library (Section C)"),
 ]
 
 GREEN, YELLOW, RED, DIM, BOLD, OFF = (
@@ -196,12 +191,12 @@ def main():
     rule("What to do next")
     if total and done == total:
         print(f"  {GREEN}Every self-test passes.{OFF} Now run each exercise on your own\n"
-              "  data, for example: python exercise3_peaks.py run\n"
+              "  data, for example: python section_A_basics.py run\n"
               "  Answer the questions in each file, and write them up.")
     else:
         print("  Open the first file above that is not yet complete and implement\n"
               "  the functions marked with TODO. Grade just that one file by\n"
-              "  running it (python irtools.py), or re-run this check.\n"
+              "  running it (python section_A_basics.py), or re-run this check.\n"
               "  Work in order: later exercises import the earlier ones.")
     return 0
 

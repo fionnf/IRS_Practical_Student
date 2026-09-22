@@ -13,9 +13,9 @@ end-to-end:
 
     background_rifg.dpt   background_sifg.dpt   background_ab.dpt
     ethanol_rifg.dpt      ethanol_sifg.dpt      ethanol_ab.dpt
-    polymer_ref_*.dpt      (for exercise9_polymer_id.py)
+    polymer_ref_*.dpt      (for section_C_polymers.py)
     polymer_unknown_*.dpt  (   "" -- one of them is not what it looks like)
-    kinetics_298K/         (for exercise11_kinetics.py -- one spectrum per
+    kinetics_298K/         (for section_E_kinetics.py -- one spectrum per
     kinetics_308K/          time point, plus a times.csv giving each file's
                             acquisition time in seconds)
 
@@ -156,7 +156,7 @@ def polymer_spectrum(wn, name):
 
 
 # ---------------------------------------------------------------------------
-# Synthetic time-resolved ATR series, for exercise11_kinetics.py
+# Synthetic time-resolved ATR series, for section_E_kinetics.py
 #
 # The chemistry is the acetic anhydride hydrolysis of Section E:
 #
@@ -293,7 +293,7 @@ def main():
     write_kinetics_series("kinetics_308K", k_308, t_end=500.0, dt=10.0,
                           rng=rng, label="35 degC")
 
-    print("\nDone. You can now run exercise1_interferogram.py")
+    print("\nDone. You can now run section_A_basics.py")
 
 
 if __name__ == "__main__":
