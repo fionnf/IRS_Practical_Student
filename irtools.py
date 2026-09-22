@@ -82,11 +82,33 @@ def load_dpt(path, column=1):
 # 2. Finding the centre of the interferogram (the "zero burst")
 # ---------------------------------------------------------------------------
 def find_zero_burst(ifg):
-    """Return the index of the zero burst (centre burst) of an interferogram.
+    """Find where the interferogram's centre burst is.
 
-    The zero burst is the point of MAXIMUM signal magnitude. It corresponds
-    to zero optical path difference, where every wavelength interferes
-    constructively at once.
+    WHAT IT MUST DO
+        Return the INDEX of the point with the largest magnitude in ``ifg``.
+
+    WHY
+        The zero burst is zero optical path difference: the one mirror
+        position where every wavelength interferes constructively at once.
+        It is the tallest feature in the interferogram, and everything else
+        you do is measured relative to it.
+
+    YOUR TASK  (two lines of code)
+        1. Take the magnitude of every point       ->  np.abs(ifg)
+        2. Return the index of the largest one     ->  int(np.argmax(...))
+
+    WORKED EXAMPLE
+        >>> find_zero_burst(np.array([0.1, -0.2, -9.0, 0.3]))
+        2
+        Index 2, not 3: -9.0 has the largest MAGNITUDE even though 0.3 is the
+        largest value. Getting this wrong is the single most common mistake
+        here, because the burst points downwards on about half of all
+        detectors, depending on polarity and phase. Skip the np.abs and your
+        code will work on friendly data and fail on real data.
+
+    THE SELF-TEST CHECKS
+        A signal whose largest-magnitude point is a negative spike at index 2
+        returns 2.
 
     Parameters
     ----------
@@ -97,12 +119,6 @@ def find_zero_burst(ifg):
     -------
     int
         Index of the maximum-magnitude sample.
-
-    Hints
-    -----
-    * The burst can be a large positive OR a large negative spike, so look at
-      the magnitude (``np.abs``).
-    * ``np.argmax`` returns the index of the largest value.
     """
     # TODO: implement me
     raise NotImplementedError("find_zero_burst: return index of the largest-magnitude point")
@@ -158,11 +174,32 @@ def window_around(ifg, center, N):
 def single_beam(ifg_window):
     """Fourier-transform a windowed interferogram into a single-beam spectrum.
 
-    An FT-IR spectrometer measures light in the *interferogram* domain. To get
-    the spectrum you apply a discrete Fourier transform and keep the MAGNITUDE.
-    Only the first half of the FFT output is physically meaningful for a real
-    input signal (the second half is the mirror image / negative frequencies),
-    so return only ``[:N//2]``.
+    WHAT IT MUST DO
+        Turn a window of length N into a magnitude spectrum of length N // 2.
+
+    WHY
+        This is the Fourier transform at the heart of FT-IR. The interferogram
+        encodes every wavelength at once; the transform separates them. You
+        keep the MAGNITUDE because the phase is not what you measure, and you
+        keep only the FIRST HALF because the FFT of a real signal is Hermitian:
+        the second half is the complex-conjugate mirror of the first and
+        carries no independent information. It is not noise, and discarding it
+        throws nothing away.
+
+    YOUR TASK  (three lines of code)
+        1. Fourier-transform the window      ->  np.fft.fft(ifg_window)
+        2. Take the magnitude                ->  np.abs(...)
+        3. Keep the first half               ->  ...[:len(ifg_window) // 2]
+
+    WORKED EXAMPLE
+        A window of 16 points transforms to 16 complex numbers, and you return
+        the first 8 magnitudes:
+        >>> len(single_beam(np.zeros(16)))
+        8
+
+    THE SELF-TEST CHECKS
+        A 16-point window gives 8 points out, with the right values for a
+        known input.
 
     Parameters
     ----------
@@ -173,11 +210,6 @@ def single_beam(ifg_window):
     -------
     numpy.ndarray
         Magnitude spectrum of length ``N // 2``.
-
-    Hints
-    -----
-    * ``np.fft.fft`` computes the DFT.
-    * ``np.abs`` gives the magnitude of the (complex) FFT result.
     """
     # TODO: implement me
     raise NotImplementedError("single_beam: FFT the window, take magnitude, keep first half")
@@ -220,11 +252,28 @@ def wavenumber_axis(N, k):
 # 6. Transmittance and absorbance
 # ---------------------------------------------------------------------------
 def transmittance(sample_sb, reference_sb):
-    """Transmittance T = I_sample / I_reference (a ratio between 0 and ~1).
+    """Divide out the instrument, leaving only what the sample did.
 
-    Dividing the sample single-beam spectrum by the reference (background)
-    single-beam spectrum removes the instrument/source response and leaves
-    only what the SAMPLE did to the light.
+    WHAT IT MUST DO
+        Return ``sample_sb / reference_sb``, element by element.
+
+    WHY
+        Both single-beam spectra are dominated by the same thing: how bright
+        the source is and how sensitive the detector is at each wavenumber.
+        That is identical in both measurements, so it cancels in the ratio.
+        What survives is the sample's own absorption. T is a fraction: 1.0 is
+        "all the light got through", 0.1 is "a tenth got through".
+
+    YOUR TASK  (one line of code)
+        1. Divide the two arrays  ->  sample_sb / reference_sb
+           numpy divides element by element, so no loop is needed.
+
+    WORKED EXAMPLE
+        >>> transmittance(np.array([5.0, 1.0]), np.array([10.0, 10.0]))
+        array([0.5, 0.1])
+
+    THE SELF-TEST CHECKS
+        Exactly that example, together with :func:`absorbance` below.
 
     Returns
     -------
@@ -236,14 +285,36 @@ def transmittance(sample_sb, reference_sb):
 
 
 def absorbance(T):
-    """Absorbance A = -log10(T).
+    """Convert transmittance to absorbance.
 
-    Absorbance is the quantity that is (ideally) linear in concentration
-    (Beer-Lambert law), which is why chemists usually report it.
+    WHAT IT MUST DO
+        Return ``-log10(T)``, element by element.
+
+    WHY
+        Transmittance is not proportional to how much of the substance is
+        there: send light through twice the sample and T squares rather than
+        halving. Taking the negative base-10 logarithm turns that into a
+        quantity that IS proportional to concentration, which is the
+        Beer-Lambert law, and it is why every spectrum in your report is
+        plotted as absorbance.
+
+    YOUR TASK  (one line of code)
+        1. Negative base-10 log  ->  -np.log10(T)
+           Use np.log10, not np.log, which is the natural logarithm.
+
+    WORKED EXAMPLE
+        >>> absorbance(np.array([0.5, 0.1]))
+        array([0.30103, 1.     ])
+        T = 0.1 gives A = 1 exactly: one absorbance unit means a tenth of the
+        light gets through. T = 0.01 gives A = 2, and so on.
+
+    THE SELF-TEST CHECKS
+        absorbance([0.5, 0.1]) == [log10(2), 1.0].
 
     Returns
     -------
     numpy.ndarray
+        Absorbance (dimensionless).
     """
     # TODO: implement me
     raise NotImplementedError("absorbance: A = -log10(T)")
