@@ -133,6 +133,23 @@ A `.dpt` file is just comma-separated `wavenumber, value`.
 > good for learning the analysis; do **not** quote its band positions as real
 > ethanol values.
 
+### Coming straight from the instrument?
+
+The spectrometer writes binary Bruker OPUS files (`ethanol.0`, `ethanol.1`, ...),
+not `.dpt` files. Convert a whole folder of them in one go instead of exporting
+each one by hand in OPUS:
+
+```bash
+pip install brukeropus          # pure-python OPUS reader, once
+python bruker_to_dpt.py raw_opus .
+```
+
+That reads every OPUS file in `raw_opus/` and writes the `.dpt` files (`_rifg`,
+`_sifg`, `_ab`, ...) into the folder you name — here the project folder, where
+the exercises look for them. Add `--blocks ab,sifg,rifg` to keep only the blocks
+you need, `--recursive` to include sub-folders, `--overwrite` to redo files that
+are already there.
+
 ---
 
 ## How to work through it
