@@ -60,35 +60,17 @@ import matplotlib.pyplot as plt
 import irtools as ir
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def common_grid(wn_a, a, wn_b, b, wn_lo=650, wn_hi=1500, n=2000):
-    """Resample two spectra (a on wn_a, b on wn_b) onto the SAME wavenumber grid.
+    wn = np.linspace(wn_lo, wn_hi, n)
 
-    Real spectra from different scans rarely share an identical wavenumber
-    axis. Before you can add/combine spectra point-by-point you must put them
-    on a common grid by interpolation.
+    def sorted_interp(x_new, x_old, y_old):
+        order = np.argsort(x_old)
+        return np.interp(x_new, x_old[order], y_old[order])
 
-    Parameters
-    ----------
-    wn_a, a : ndarray   first spectrum's wavenumber axis and absorbance.
-    wn_b, b : ndarray   second spectrum's wavenumber axis and absorbance.
-    wn_lo, wn_hi : float   range to keep (choose a region with informative,
-        non-saturated bands -- e.g. the aromatic/substitution region for
-        xylenes, roughly 650-900 cm^-1, or widen if you want more bands).
-    n : int   number of points in the common grid.
-
-    Returns
-    -------
-    wn : ndarray, length n       the common grid.
-    a_i, b_i : ndarray, length n  both spectra resampled onto it.
-
-    Hints
-    -----
-    * ``np.linspace(wn_lo, wn_hi, n)`` builds the common grid.
-    * ``np.interp(x_new, x_old, y_old)`` requires ``x_old`` sorted ascending;
-      flip your arrays first if your wavenumber axis runs high to low.
-    """
-    # TODO: build wn, then np.interp both spectra onto it (mind sort order!)
-    raise NotImplementedError("common_grid")
+    a_i = sorted_interp(wn, wn_a, a)
+    b_i = sorted_interp(wn, wn_b, b)
+    return wn, a_i, b_i
 
 
 def unmix(A_mixture, A_pure1, A_pure2):
@@ -233,20 +215,6 @@ def _report(name, ok, msg=""):
 def _selftest():
     print("Running exercise6 self-tests...\n")
     results = []
-    # both spectra must land on one shared axis
-    try:
-        wn_a = np.linspace(600, 1600, 900)
-        wn_b = np.linspace(650, 1550, 700)
-        a = np.exp(-((wn_a - 1000) / 40.0) ** 2)
-        b = np.exp(-((wn_b - 1300) / 40.0) ** 2)
-        wn, ai, bi = common_grid(wn_a, a, wn_b, b, wn_lo=700, wn_hi=1500, n=500)
-        ok = (len(wn) == len(ai) == len(bi) == 500
-              and np.all(np.diff(wn) > 0) and wn[0] >= 700 and wn[-1] <= 1500)
-        results.append(_report("common_grid", ok, "expected three arrays of length n, on an ascending axis"))
-    except NotImplementedError:
-        results.append(_report("common_grid", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("common_grid", False, f"raised {e!r}"))
 
     # an exact mixture of two knowns must give its own coefficients back
     try:

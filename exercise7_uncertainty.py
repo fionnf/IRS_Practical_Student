@@ -122,6 +122,7 @@ def propagate_product(values, uncertainties):
     raise NotImplementedError("propagate_product")
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def propagate_power(rel_uncertainty_x, power):
     """Relative uncertainty when a quantity is raised to a power.
 
@@ -134,8 +135,7 @@ def propagate_power(rel_uncertainty_x, power):
     -------
     float
     """
-    # TODO: implement
-    raise NotImplementedError("propagate_power")
+    return abs(power) * rel_uncertainty_x
 
 
 # ---------------------------------------------------------------------------
@@ -257,15 +257,6 @@ def _selftest():
         results.append(_report("propagate_product", False, "not implemented"))
     except Exception as e:
         results.append(_report("propagate_product", False, f"raised {e!r}"))
-
-    try:
-        rel2 = propagate_power(0.05, 2)
-        ok = np.isclose(rel2, 0.10)
-        results.append(_report("propagate_power", ok, "should scale by |power|"))
-    except NotImplementedError:
-        results.append(_report("propagate_power", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("propagate_power", False, f"raised {e!r}"))
 
     try:
         rng = np.random.default_rng(0)

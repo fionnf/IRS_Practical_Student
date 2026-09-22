@@ -111,6 +111,7 @@ def find_zero_burst(ifg):
 # ---------------------------------------------------------------------------
 # 3. Cutting a symmetric window around the zero burst
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def window_around(ifg, center, N):
     """Return ``N`` samples of ``ifg`` centred on index ``center``.
 
@@ -137,8 +138,18 @@ def window_around(ifg, center, N):
     * You may assume the burst is far enough from the ends that the window
       fits. (In exercise 4 you will think about what happens if it doesn't.)
     """
-    # TODO: implement me
-    raise NotImplementedError("window_around: slice N points centred on `center`")
+    start = int(center - N / 2)
+    stop = int(center + N / 2)
+    if start < 0 or stop > len(ifg):
+        # Slicing past the end of an array does NOT raise in Python, it just
+        # returns a shorter one. That silently breaks everything downstream:
+        # the spectrum and the wavenumber axis stop matching and you get a
+        # shifted spectrum with no error message. So say so here instead.
+        raise ValueError(
+            "a window of N=%d around index %d does not fit in an "
+            "interferogram of %d points. The largest N that fits is %d."
+            % (N, center, len(ifg), 2 * min(center, len(ifg) - center)))
+    return ifg[start:stop]
 
 
 # ---------------------------------------------------------------------------
@@ -175,6 +186,7 @@ def single_beam(ifg_window):
 # ---------------------------------------------------------------------------
 # 5. Building the wavenumber axis
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def wavenumber_axis(N, k):
     """Return the wavenumber (cm^-1) axis matching a spectrum of length N//2.
 
@@ -201,8 +213,7 @@ def wavenumber_axis(N, k):
     * The axis must have EXACTLY the same length as the output of
       :func:`single_beam`.
     """
-    # TODO: implement me
-    raise NotImplementedError("wavenumber_axis: linspace from 0 to k with N//2 points")
+    return np.linspace(0, k, N // 2)
 
 
 # ---------------------------------------------------------------------------
@@ -263,17 +274,6 @@ def _selftest():
     except Exception as e:  # noqa
         results.append(_report("find_zero_burst", False, f"raised {e!r}"))
 
-    # window_around
-    try:
-        arr = np.arange(100.0)
-        w = window_around(arr, center=50, N=10)
-        ok = (len(w) == 10 and w[0] == 45 and w[-1] == 54)
-        results.append(_report("window_around", ok, "window bounds/length wrong"))
-    except NotImplementedError:
-        results.append(_report("window_around", False, "not implemented"))
-    except Exception as e:  # noqa
-        results.append(_report("window_around", False, f"raised {e!r}"))
-
     # single_beam  (delta function -> flat magnitude spectrum)
     try:
         x = np.zeros(16); x[0] = 1.0
@@ -284,16 +284,6 @@ def _selftest():
         results.append(_report("single_beam", False, "not implemented"))
     except Exception as e:  # noqa
         results.append(_report("single_beam", False, f"raised {e!r}"))
-
-    # wavenumber_axis
-    try:
-        wn = wavenumber_axis(N=16, k=16716.51)
-        ok = (len(wn) == 8 and wn[0] == 0.0 and np.isclose(wn[-1], 16716.51))
-        results.append(_report("wavenumber_axis", ok, "length or endpoints wrong"))
-    except NotImplementedError:
-        results.append(_report("wavenumber_axis", False, "not implemented"))
-    except Exception as e:  # noqa
-        results.append(_report("wavenumber_axis", False, f"raised {e!r}"))
 
     # transmittance / absorbance
     try:

@@ -144,15 +144,16 @@ A `.dpt` file is just comma-separated `wavenumber, value`.
 Do the files **in order** — later ones import earlier ones.
 
 ### `irtools.py` — build your toolkit *(start here)*
-The core FT-IR maths as **six** small functions you implement yourself:
-`find_zero_burst`, `window_around`, `single_beam`, `wavenumber_axis`,
-`transmittance`, `absorbance`. Nothing downstream works until these pass, so
-get all five self-tests green before moving on.
+**Four** small functions, and none of them is long:
+`find_zero_burst`, `single_beam`, `transmittance`, `absorbance`. Nothing
+downstream works until these pass, so get all three self-tests green before
+moving on.
 
-`load_dpt` is **written for you**. Reading a comma-separated file is Python
-housekeeping, not spectroscopy, and every exercise needs it before it can do
-anything at all, so it is not a useful place to get stuck. Read it, then start
-at `find_zero_burst`.
+Three more are **written for you** and marked as such: `load_dpt` (reading a
+comma-separated file), `window_around` (index arithmetic) and
+`wavenumber_axis` (building an evenly spaced grid). None of those is
+spectroscopy, and they are not useful places to get stuck. Read them, then
+start at `find_zero_burst`.
 
 ### 1. `exercise1_interferogram.py` — load and explore
 Read the files, find the zero burst, plot the interferograms, and reason about

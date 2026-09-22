@@ -64,6 +64,7 @@ import irtools as ir
 # ---------------------------------------------------------------------------
 # Part A -- spectral library matching
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def preprocess(A):
     """Prepare a spectrum for library comparison: mean-centre, then unit-normalise.
 
@@ -92,8 +93,12 @@ def preprocess(A):
     * Guard against a zero-norm input (a totally flat spectrum) so you don't
       divide by zero.
     """
-    # TODO: implement me
-    raise NotImplementedError("preprocess")
+    A = np.asarray(A, dtype=float)
+    centred = A - A.mean()
+    norm = np.linalg.norm(centred)
+    if norm == 0:
+        return centred          # a totally flat spectrum has no shape to match
+    return centred / norm
 
 
 def hit_quality_index(A_unknown, A_reference):
@@ -119,6 +124,7 @@ def hit_quality_index(A_unknown, A_reference):
     raise NotImplementedError("hit_quality_index")
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def search_library(A_unknown, library):
     """Score an unknown against every reference and return a ranked hit list.
 
@@ -132,8 +138,10 @@ def search_library(A_unknown, library):
     -------
     list of (name, score), sorted best-first.
     """
-    # TODO: score every entry with hit_quality_index, then sort descending
-    raise NotImplementedError("search_library")
+    scored = [(name, hit_quality_index(A_unknown, ref))
+              for name, ref in library.items()]
+    scored.sort(key=lambda pair: pair[1], reverse=True)
+    return scored
 
 
 def subtract_best_match(A_unknown, A_reference):
@@ -334,15 +342,6 @@ def _selftest():
     results = []
 
     try:
-        v = preprocess(np.array([1.0, 2.0, 3.0, 4.0]))
-        ok = np.isclose(v.mean(), 0.0, atol=1e-12) and np.isclose(np.linalg.norm(v), 1.0)
-        results.append(_report("preprocess", ok, "should be mean 0 and norm 1"))
-    except NotImplementedError:
-        results.append(_report("preprocess", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("preprocess", False, f"raised {e!r}"))
-
-    try:
         a = np.array([0.0, 1.0, 0.0, 2.0, 0.0])
         # identical shape but offset and scaled -> must still score ~1.0
         b = 3.7 * a + 0.9
@@ -355,18 +354,6 @@ def _selftest():
         results.append(_report("hit_quality_index", False, "not implemented"))
     except Exception as e:
         results.append(_report("hit_quality_index", False, f"raised {e!r}"))
-
-    try:
-        target = np.array([0.0, 1.0, 0.0, 2.0, 0.0])
-        lib = {"right": target, "wrong": np.array([2.0, 0.0, 1.0, 0.0, 0.5])}
-        ranked = search_library(target, lib)
-        ok = (ranked[0][0] == "right" and len(ranked) == 2
-              and ranked[0][1] >= ranked[1][1])
-        results.append(_report("search_library", ok, "should rank the true match first"))
-    except NotImplementedError:
-        results.append(_report("search_library", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("search_library", False, f"raised {e!r}"))
 
     try:
         ref = np.array([0.0, 1.0, 0.0, 2.0, 0.0])

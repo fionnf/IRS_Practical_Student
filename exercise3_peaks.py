@@ -109,6 +109,7 @@ def find_bands(wn, A, height=None, distance=None):
     raise NotImplementedError("find_bands: detect peaks with scipy.signal.find_peaks")
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def assign(peak_wn):
     """Match each peak wavenumber to entries in CORRELATION_TABLE.
 
@@ -116,9 +117,11 @@ def assign(peak_wn):
     -------
     list of (wavenumber, [matching group labels])
     """
-    # TODO: for each peak, collect every table row whose (low, high) range
-    #       contains that wavenumber; return the pairs.
-    raise NotImplementedError("assign: map peaks to functional groups")
+    results = []
+    for w in peak_wn:
+        groups = [name for name, lo, hi in CORRELATION_TABLE if lo <= w <= hi]
+        results.append((w, groups))
+    return results
 
 
 def main():
@@ -217,17 +220,6 @@ def _selftest():
         results.append(_report("find_bands", False, "not implemented"))
     except Exception as e:
         results.append(_report("find_bands", False, f"raised {e!r}"))
-
-    # assign returns one entry per peak, each with a list of labels
-    try:
-        out = assign(np.array([1700.0, 1100.0]))
-        ok = (len(out) == 2
-              and all(len(row) == 2 and isinstance(row[1], list) for row in out))
-        results.append(_report("assign", ok, "expected one (wavenumber, [labels]) pair per input peak"))
-    except NotImplementedError:
-        results.append(_report("assign", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("assign", False, f"raised {e!r}"))
 
 
     passed = sum(bool(r) for r in results)

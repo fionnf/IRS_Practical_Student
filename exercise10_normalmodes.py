@@ -105,6 +105,7 @@ def f_matrix(k_r, k_rr):
     raise NotImplementedError("f_matrix")
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def g_matrix(m_central, m_terminal):
     """Inverse-kinetic-energy (Wilson G) matrix for the same stretching block.
 
@@ -122,8 +123,10 @@ def g_matrix(m_central, m_terminal):
     (The off-diagonal is ``cos(theta)/m_central`` in general; for a LINEAR
     molecule theta = 180 degrees so cos(theta) = -1.)
     """
-    # TODO: implement me
-    raise NotImplementedError("g_matrix")
+    inv_c = 1.0 / m_central
+    inv_t = 1.0 / m_terminal
+    return np.array([[inv_c + inv_t, -inv_c],
+                     [-inv_c, inv_c + inv_t]], dtype=float)
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +161,7 @@ def solve_modes(G, F):
     raise NotImplementedError("solve_modes")
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def classify_mode(eigenvector, tol=1e-6):
     """Label a stretching eigenvector 'symmetric' or 'antisymmetric'.
 
@@ -173,8 +177,8 @@ def classify_mode(eigenvector, tol=1e-6):
     -----
     * Look at the sign of the product of the two components.
     """
-    # TODO: implement me
-    raise NotImplementedError("classify_mode")
+    a, b = float(eigenvector[0]), float(eigenvector[1])
+    return "symmetric" if a * b > tol else "antisymmetric"
 
 
 # ---------------------------------------------------------------------------
@@ -348,16 +352,6 @@ def _selftest():
     except Exception as e:
         results.append(_report("f_matrix", False, f"raised {e!r}"))
 
-    try:
-        G = g_matrix(m_c, m_s)
-        expect = np.array([[1 / m_c + 1 / m_s, -1 / m_c], [-1 / m_c, 1 / m_c + 1 / m_s]])
-        ok = np.allclose(G, expect, rtol=1e-9)
-        results.append(_report("g_matrix", ok, "check the -1/m_central off-diagonal"))
-    except NotImplementedError:
-        results.append(_report("g_matrix", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("g_matrix", False, f"raised {e!r}"))
-
     # With k_rr = 0 the two stretches must come out at the Section F values.
     try:
         lam1 = (2 * np.pi * C_CGS * 656.0) ** 2
@@ -372,15 +366,6 @@ def _selftest():
         results.append(_report("solve_modes", False, "not implemented"))
     except Exception as e:
         results.append(_report("solve_modes", False, f"raised {e!r}"))
-
-    try:
-        ok = (classify_mode(np.array([0.707, 0.707])) == "symmetric"
-              and classify_mode(np.array([0.707, -0.707])) == "antisymmetric")
-        results.append(_report("classify_mode", ok, "sign logic wrong"))
-    except NotImplementedError:
-        results.append(_report("classify_mode", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("classify_mode", False, f"raised {e!r}"))
 
     try:
         k_r, k_rr = fit_force_constants(656.0, 1535.0, m_c, m_s)

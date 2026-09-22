@@ -108,6 +108,7 @@ def zero_fill(window, factor=2):
     raise NotImplementedError("zero_fill: pad the window with zeros")
 
 
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def spectrum_from_window(window, k):
     """Single-beam magnitude spectrum + matching wavenumber axis for a window.
 
@@ -242,18 +243,6 @@ def _selftest():
         results.append(_report("zero_fill", False, "not implemented"))
     except Exception as e:
         results.append(_report("zero_fill", False, f"raised {e!r}"))
-
-    # the spectrum and its axis must be the same length
-    try:
-        w = np.zeros(512)
-        w[256] = 10.0
-        wn, spec = spectrum_from_window(w, 16716.51)
-        ok = (len(wn) == len(spec) == len(w) // 2)
-        results.append(_report("spectrum_from_window", ok, "wn and the spectrum should both be len(window)//2"))
-    except NotImplementedError:
-        results.append(_report("spectrum_from_window", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("spectrum_from_window", False, f"raised {e!r}"))
 
 
     passed = sum(bool(r) for r in results)
