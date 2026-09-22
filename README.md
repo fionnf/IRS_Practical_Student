@@ -41,8 +41,8 @@ in.** It is a diagnostic tool — nothing it prints is graded.
 Every exercise then works the same way:
 
 ```bash
-python exercise3_peaks.py        # grade yourself against its self-tests
-python exercise3_peaks.py run    # run the analysis on your data
+python section_A_basics.py        # grade yourself against its self-tests
+python section_A_basics.py run    # run the analysis on your data
 ```
 
 > **The interactive bench page** — four in-browser instruments (interferometer
@@ -54,10 +54,10 @@ python exercise3_peaks.py run    # run the analysis on your data
 ```
 3. Your progress
 ----------------------------------------------------------
-  [6/6] irtools.py                       ######  Your FT-IR toolkit
-  [0/5] exercise7_uncertainty.py         .....   Uncertainty toolkit
+  [6/6] section_A_basics.py                       ######  Your FT-IR toolkit
+  [0/5] uncertainty.py         .....   Uncertainty toolkit
   ...
-  Self-tests passed: 6/28
+  Self-tests passed: 0/15
 ```
 
 ---
@@ -141,109 +141,44 @@ A `.dpt` file is just comma-separated `wavenumber, value`.
 
 ## How to work through it
 
-Do the files **in order** — later ones import earlier ones.
+**One script per experiment.** Each is self-contained: open it, run it, and it
+does that section from beginning to end. There is no toolkit to build first and
+no order you have to follow — start with whichever section you measured first.
 
-### `irtools.py` — build your toolkit *(start here)*
-**Four** small functions, and none of them is long:
-`find_zero_burst`, `single_beam`, `transmittance`, `absorbance`. Nothing
-downstream works until these pass, so get all three self-tests green before
-moving on.
+| File | Answers | You write |
+|---|---|---|
+| `section_A_basics.py` | Section A Q1–Q8 (and 0 Q3) | 4 functions |
+| `section_C_polymers.py` | Section C Q1–Q6 | 2 functions |
+| `section_D_mixtures.py` | Section D Q1–Q7 | 1 function |
+| `section_E_kinetics.py` | Section E Q1–Q5 | 3 functions |
+| `section_F_normalmodes.py` | Section F Q1–Q4 | 2 functions |
+| `uncertainty.py` | used by all of them | nothing, it is given |
 
-Three more are **written for you** and marked as such: `load_dpt` (reading a
-comma-separated file), `window_around` (index arithmetic) and
-`wavenumber_axis` (building an evenly spaced grid). None of those is
-spectroscopy, and they are not useful places to get stuck. Read them, then
-start at `find_zero_burst`.
+**Twelve short functions in total.** Each is marked with a `# TODO`, says how
+many lines it wants, and comes with a worked example. Everything else —
+including the whole Fourier-transform pipeline and all of `uncertainty.py` — is
+written for you and marked **WRITTEN FOR YOU**. Read it; don't rewrite it.
 
-### 1. `exercise1_interferogram.py` — load and explore
-Read the files, find the zero burst, plot the interferograms, and reason about
-*where the chemical information hides* before transforming anything.
+Every script works the same way:
 
-### 2. `exercise2_spectrum.py` — interferogram → spectrum
-Assemble the full pipeline: single-beam spectra → transmittance → absorbance,
-then **validate against the instrument's own `*_ab.dpt`**. On the practice data a
-correct pipeline reproduces the known band absorbances to a couple of percent —
-so a large disagreement means a real bug, not bad luck.
-
-### 3. `exercise3_peaks.py` — read it like a chemist
-Baseline-correct, detect peaks with `scipy.signal.find_peaks`, and **assign** them
-to functional groups using the correlation table provided.
-
-### 4. `exercise4_resolution.py` — the instrument's knobs
-Numerical experiments on the three things that shape every FT-IR spectrum:
-**window length** (resolution ≈ 1 / maximum optical path difference),
-**apodization** (peak shape versus ringing) and **zero-filling** (interpolation
-versus true resolving power).
-
-### 5. `exercise5_simulation.py` — build a spectrometer *(optional)*
-Not assigned by the current task list, but kept because it is the clearest way to
-see the whole pipeline from the other side. Run the physics **backwards**: turn a known spectrum into an interferogram, then
-recover it. Six parts — forward model, round trip, why noise falls as √n,
-Beer–Lambert calibration, deconvolving overlapping bands with `curve_fit`, and a
-Monte Carlo uncertainty. Needs no instrument data.
-
-### 6. `exercise6_mixture_unmixing.py` — quantify a real mixture
-**Classical least-squares unmixing** on your xylene-isomer data: solve
-`A_mixture ≈ x₁·A_pure1 + x₂·A_pure2` directly from the spectrum, no peak-picking,
-and use the reconstruction residual to answer *quantitatively* whether the
-mixture is ideal.
-
-### 7. `exercise7_uncertainty.py` — error propagation and statistics
-A toolkit you will use for the **rest** of the practical: small-sample confidence
-intervals (Student's *t*, not a bare standard deviation), propagation through
-products and powers, regression with standard errors, and a two-sample *t*-test.
-Every number you quote in your report should come with an uncertainty from here.
-
-### 9. `exercise9_polymer_id.py` — how library matching really works
-Implement the **hit quality index** that commercial identification software
-computes internally (cosine similarity of baseline-removed, normalised spectra),
-then learn why a confident top hit can still be an incomplete answer: one of the
-two practice unknowns is a laminate, and only a **residual re-search** reveals its
-second layer. Also covers ATR penetration depth and the PE crystallinity index.
-
-### 10. `exercise10_normalmodes.py` — where frequencies come from
-Build the Wilson **GF matrices** for a linear XY₂ molecule, diagonalise for
-frequencies *and* eigenvectors, then invert the problem to extract both force
-constants from your measured spectrum — resolving the ~7% discrepancy the manual
-deliberately leaves hanging as a real stretch–stretch interaction constant rather
-than experimental error.
-
-### 11. `exercise11_kinetics.py` -- watch a reaction happen
-Follow the hydrolysis of acetic anhydride on the ATR in real time. Five short
-functions: load a whole folder of spectra with its time axis, integrate a band
-above a local baseline, do that at every time point, fit the first-order decay
-for `k` and a half-life with real uncertainties, and locate the **isosbestic
-point** that proves one reactant is going cleanly to one product. Then the
-honest part: log-linearising over-weights the noisy late points, so refit
-without them and report how far `k` moves.
-
-### 11. `exercise11_kinetics.py` — watch a reaction happen
-Follow the hydrolysis of acetic anhydride on the ATR in real time. Five short
-functions: load a whole folder of spectra with its time axis, integrate a band
-above a local baseline, do that at every time point, fit the first-order decay
-for `k` and a half-life with real uncertainties, and locate the **isosbestic
-point** that shows one reactant going cleanly to one product. Then the honest
-part: log-linearising over-weights the noisy late points, so refit without them
-and report how far `k` moves.
-
-> `dft_example.R` is an optional R version of the core workflow, provided as-is.
-> Teaching assistants support **Python** only.
-
----
+```bash
+python section_A_basics.py        # grade yourself against its self-tests
+python section_A_basics.py run    # run the analysis on your data
+```
 
 ## Which file goes with which part of the lab manual
 
 | Manual section | Python file(s) | Practice data |
 |---|---|---|
-| 0 — Pre-lab tools & orientation | `irtools.py` | — |
-| A — FT-IR measurement basics | `exercise1`…`exercise4`, `exercise7` | `background_*`, `ethanol_*` |
-| B — The Case of Deniz O'Sullivan | `exercise3`, `exercise7` | your own |
-| C — The Afterparty (polymers) | `exercise9_polymer_id.py` | `polymer_ref_*`, `polymer_unknown_*` |
-| D — Excess spectra of ideal mixtures | `exercise6_mixture_unmixing.py` | your own |
-| E — Hydrolysis of acetic anhydride | `exercise11_kinetics.py` | `kinetics_298K/`, `kinetics_308K/` |
-| F — Raman and IR of CS₂ | `exercise10_normalmodes.py` | your own |
-| G — The O–H band as a probe | `exercise3`, `exercise7` | your own |
-| H — H/D exchange | `exercise3`, `exercise7` | your own |
+| 0 — Pre-lab tools & orientation | `section_A_basics.py` | — |
+| A — FT-IR measurement basics | `section_A_basics.py` | `background_*`, `ethanol_*` |
+| B — The Case of Deniz O'Sullivan | `section_A_basics.py`, `uncertainty.py` | your own |
+| C — The Afterparty (polymers) | `section_C_polymers.py` | `polymer_ref_*`, `polymer_unknown_*` |
+| D — Excess spectra of ideal mixtures | `section_D_mixtures.py` | your own |
+| E — Hydrolysis of acetic anhydride | `section_E_kinetics.py` | `kinetics_298K/`, `kinetics_308K/` |
+| F — Raman and IR of CS₂ | `section_F_normalmodes.py` | your own |
+| G — The O–H band as a probe | `section_A_basics.py`, `uncertainty.py` | your own |
+| H — H/D exchange | `section_A_basics.py`, `uncertainty.py` | your own |
 
 ---
 

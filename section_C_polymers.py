@@ -40,7 +40,7 @@ Run `generate_demo_data.py` to get a practice library
 Section C, and build your library from the reference polymers available in
 the lab.
 
-Run with:  python exercise9_polymer_id.py
+Run with:  python section_C_polymers.py
 
 WHICH QUESTIONS THIS ANSWERS
 ----------------------------
@@ -58,7 +58,21 @@ those are now plain bullets under each step.
 import numpy as np
 import matplotlib.pyplot as plt
 
-import irtools as ir
+
+
+# ---------------------------------------------------------------------------
+# Reading a .dpt file -- WRITTEN FOR YOU
+# ---------------------------------------------------------------------------
+def load_dpt(path, column=1):
+    """Load one column from a Bruker ``.dpt`` file (comma-separated text).
+
+    ``column=0`` gives the wavenumbers, ``column=1`` the values, and
+    ``column=None`` gives both as a 2-D array.
+    """
+    data = np.loadtxt(path, delimiter=",")
+    if column is None:
+        return data
+    return data[:, column]
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +186,7 @@ def subtract_best_match(A_unknown, A_reference):
 # ---------------------------------------------------------------------------
 # Part B -- ATR penetration depth (Harrick)
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def penetration_depth(wavenumber_cm, n_crystal, n_sample, angle_deg):
     """Evanescent-wave penetration depth d_p in an ATR experiment, in metres.
 
@@ -202,13 +217,18 @@ def penetration_depth(wavenumber_cm, n_crystal, n_sample, angle_deg):
       not occurring -- that combination of n1/n2/theta is unphysical for ATR.
       Returning ``np.nan`` in that case is reasonable.
     """
-    # TODO: implement me
-    raise NotImplementedError("penetration_depth")
+    lam = 1.0 / (wavenumber_cm * 100.0)          # cm^-1 -> metres
+    theta = np.deg2rad(angle_deg)
+    radicand = np.sin(theta) ** 2 - (n_sample / n_crystal) ** 2
+    if np.any(radicand <= 0):
+        raise ValueError("no total internal reflection: check angle and indices")
+    return lam / (2 * np.pi * n_crystal * np.sqrt(radicand))
 
 
 # ---------------------------------------------------------------------------
 # Part C -- polyethylene crystallinity index
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def crystallinity_index(wn, A, wn_cryst=730.0, wn_amorph=720.0, window=6.0):
     """Relative PE crystallinity from the CH2 rocking doublet.
 
@@ -235,10 +255,17 @@ def crystallinity_index(wn, A, wn_cryst=730.0, wn_amorph=720.0, window=6.0):
     -----
     * Build a boolean mask over ``wn`` for each window and take ``A[mask].max()``.
     * Baseline-correct this region FIRST (reuse ``baseline_correct`` from
-      exercise3) or your index will be dominated by the baseline, not the bands.
+      section_A_basics.py) or your index will be dominated by the baseline, not the bands.
     """
-    # TODO: implement me
-    raise NotImplementedError("crystallinity_index")
+    wn = np.asarray(wn, dtype=float)
+    A = np.asarray(A, dtype=float)
+    m_c = np.abs(wn - wn_cryst) <= window
+    m_a = np.abs(wn - wn_amorph) <= window
+    if not m_c.any() or not m_a.any():
+        raise ValueError("doublet window falls outside the wavenumber range")
+    a_c = float(A[m_c].max())
+    a_a = float(A[m_a].max())
+    return a_c / (a_c + a_a)
 
 
 # ---------------------------------------------------------------------------
@@ -254,7 +281,7 @@ def main():
     library = {}
     wn = None
     for n in names:
-        # TODO: w, a = ir.load_dpt(f"polymer_ref_{n}.dpt", column=None).T
+        # TODO: w, a = load_dpt(f"polymer_ref_{n}.dpt", column=None).T
         # TODO: library[n] = a ; wn = w
         pass
     if not library:
@@ -269,7 +296,7 @@ def main():
     #       the baseline removal). Does the ranking change? Unknown 1 has a
     #       deliberate sloping baseline -- explain what you observe.
     # -----------------------------------------------------------------
-    # TODO: w1, U1 = ir.load_dpt("polymer_unknown_1.dpt", column=None).T
+    # TODO: w1, U1 = load_dpt("polymer_unknown_1.dpt", column=None).T
     # TODO: print(search_library(U1, library))
 
     # -----------------------------------------------------------------
@@ -278,7 +305,7 @@ def main():
     #       Compare its score with the top score you got for unknown 1 --
     #       what does the difference suggest?
     # -----------------------------------------------------------------
-    # TODO: w2, U2 = ir.load_dpt("polymer_unknown_2.dpt", column=None).T
+    # TODO: w2, U2 = load_dpt("polymer_unknown_2.dpt", column=None).T
     # TODO: print(search_library(U2, library))
 
     # -----------------------------------------------------------------
@@ -328,7 +355,7 @@ def main():
 
 
 # ---------------------------------------------------------------------------
-# Self-tests -- run `python exercise9_polymer_id.py` to grade yourself.
+# Self-tests -- run `python section_C_polymers.py` to grade yourself.
 # Do not modify below this line.
 # ---------------------------------------------------------------------------
 def _report(name, ok, msg=""):
@@ -338,7 +365,7 @@ def _report(name, ok, msg=""):
 
 
 def _selftest():
-    print("Running exercise9 self-tests...\n")
+    print("Running Section C self-tests...\n")
     results = []
 
     try:
@@ -367,30 +394,6 @@ def _selftest():
     except Exception as e:
         results.append(_report("subtract_best_match", False, f"raised {e!r}"))
 
-    try:
-        # diamond-like crystal, polymer sample, 45 deg
-        dp_high = penetration_depth(3000.0, 2.4, 1.5, 45.0)
-        dp_low = penetration_depth(700.0, 2.4, 1.5, 45.0)
-        ok = (dp_low > dp_high > 0) and np.isclose(dp_low / dp_high, 3000.0 / 700.0, rtol=1e-6)
-        results.append(_report("penetration_depth", ok,
-                               "d_p must scale with wavelength (deeper at low wavenumber)"))
-    except NotImplementedError:
-        results.append(_report("penetration_depth", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("penetration_depth", False, f"raised {e!r}"))
-
-    try:
-        wn = np.linspace(700, 750, 501)
-        A = (np.exp(-((wn - 730.0) ** 2) / (2 * 2.0 ** 2)) * 0.6
-             + np.exp(-((wn - 720.0) ** 2) / (2 * 2.0 ** 2)) * 0.4)
-        idx = crystallinity_index(wn, A)
-        ok = np.isclose(idx, 0.6, atol=0.02)
-        results.append(_report("crystallinity_index", ok, "expected ~0.6 for a 0.6/0.4 doublet"))
-    except NotImplementedError:
-        results.append(_report("crystallinity_index", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("crystallinity_index", False, f"raised {e!r}"))
-
     passed = sum(bool(r) for r in results)
     print(f"\n{passed}/{len(results)} checks passed.")
     if passed == len(results):
@@ -406,4 +409,4 @@ if __name__ == "__main__":
         main()
     else:
         _selftest()
-        print("\nTo run the analysis on your own data:  python exercise9_polymer_id.py run")
+        print("\nTo run the analysis on your own data:  python section_C_polymers.py run")

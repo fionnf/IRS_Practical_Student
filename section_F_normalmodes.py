@@ -51,7 +51,7 @@ manual) animates these eigenvectors and shows the dipole moment and
 polarizability changing in real time, which is worth five minutes of your
 attention before you start.
 
-Run with:  python exercise10_normalmodes.py
+Run with:  python section_F_normalmodes.py
 
 WHICH QUESTIONS THIS ANSWERS
 ----------------------------
@@ -89,6 +89,7 @@ CS2_BOND_LENGTH = 1.5529e-10   # m
 # ---------------------------------------------------------------------------
 # 1. Build the matrices
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def f_matrix(k_r, k_rr):
     """Force-constant matrix for the stretching block of a linear XY2.
 
@@ -101,8 +102,8 @@ def f_matrix(k_r, k_rr):
     the other. Setting k_rr = 0 recovers the "simple valence force field"
     used in Section F.
     """
-    # TODO: implement me
-    raise NotImplementedError("f_matrix")
+    return np.array([[k_r, k_rr],
+                     [k_rr, k_r]], dtype=float)
 
 
 # --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
@@ -219,6 +220,7 @@ def fit_force_constants(nu_sym, nu_asym, m_central, m_terminal):
 # ---------------------------------------------------------------------------
 # 4. The bending mode
 # ---------------------------------------------------------------------------
+# --- WRITTEN FOR YOU: plumbing, not physics. Read it and move on. ---
 def bend_wavenumber(k_delta, bond_length, m_central, m_terminal):
     """Wavenumber (cm^-1) of the doubly-degenerate bend of a linear XY2.
 
@@ -234,8 +236,8 @@ def bend_wavenumber(k_delta, bond_length, m_central, m_terminal):
     -------
     float, wavenumber in cm^-1.
     """
-    # TODO: implement me
-    raise NotImplementedError("bend_wavenumber")
+    lam = (2.0 * k_delta / bond_length ** 2) * (1.0 / m_terminal + 2.0 / m_central)
+    return float(np.sqrt(lam) / (2 * np.pi * C_CGS))
 
 
 # ---------------------------------------------------------------------------
@@ -329,7 +331,7 @@ def main():
 
 
 # ---------------------------------------------------------------------------
-# Self-tests -- run `python exercise10_normalmodes.py` to grade yourself.
+# Self-tests -- run `python section_F_normalmodes.py` to grade yourself.
 # Do not modify below this line.
 # ---------------------------------------------------------------------------
 def _report(name, ok, msg=""):
@@ -339,18 +341,9 @@ def _report(name, ok, msg=""):
 
 
 def _selftest():
-    print("Running exercise10 self-tests...\n")
+    print("Running Section F self-tests...\n")
     results = []
     m_c, m_s = M_C * U, M_S * U
-
-    try:
-        F = f_matrix(700.0, 50.0)
-        ok = (np.allclose(F, [[700.0, 50.0], [50.0, 700.0]]))
-        results.append(_report("f_matrix", ok, "layout wrong"))
-    except NotImplementedError:
-        results.append(_report("f_matrix", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("f_matrix", False, f"raised {e!r}"))
 
     # With k_rr = 0 the two stretches must come out at the Section F values.
     try:
@@ -380,15 +373,6 @@ def _selftest():
     except Exception as e:
         results.append(_report("fit_force_constants", False, f"raised {e!r}"))
 
-    try:
-        nu = bend_wavenumber(5.656e-19, CS2_BOND_LENGTH, m_c, m_s)
-        ok = np.isclose(nu, 397.0, rtol=2e-3)
-        results.append(_report("bend_wavenumber", ok, "expected ~397 cm^-1 for CS2"))
-    except NotImplementedError:
-        results.append(_report("bend_wavenumber", False, "not implemented"))
-    except Exception as e:
-        results.append(_report("bend_wavenumber", False, f"raised {e!r}"))
-
     passed = sum(bool(r) for r in results)
     print(f"\n{passed}/{len(results)} checks passed.")
     if passed == len(results):
@@ -404,4 +388,4 @@ if __name__ == "__main__":
         main()
     else:
         _selftest()
-        print("\nTo run the analysis on your own data:  python exercise10_normalmodes.py run")
+        print("\nTo run the analysis on your own data:  python section_F_normalmodes.py run")

@@ -28,14 +28,14 @@ each one feeds the next.
 
 Before you start
 -----------------
-Finish `exercise7_uncertainty.py` first: `fit_first_order` uses its
+Finish `uncertainty.py` first: `fit_first_order` uses its
 regression routine, so this file will not work until that one does.
 
 You need no data of your own to practise. If the folders `kinetics_298K/`
 and `kinetics_308K/` are not there, they are generated for you the first time
 you run this.
 
-Run with:  python exercise11_kinetics.py
+Run with:  python section_E_kinetics.py
 
 WHICH QUESTIONS THIS ANSWERS
 ----------------------------
@@ -57,8 +57,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-import irtools as ir
-import exercise7_uncertainty as unc
+import uncertainty as unc
 
 # Band windows for this reaction, in cm^-1. Adjust them to YOUR spectra: these
 # are sensible starting values, not gospel.
@@ -67,6 +66,21 @@ ACID_BAND = (1680, 1740)          # the 1710 C=O of the acid product
 # An isosbestic point lies BETWEEN the band that falls and the band that
 # rises, so search between the acid C=O at 1710 and the anhydride C=O at 1750.
 ISOSBESTIC_WINDOW = (1710, 1760)
+
+
+# ---------------------------------------------------------------------------
+# Reading a .dpt file -- WRITTEN FOR YOU
+# ---------------------------------------------------------------------------
+def load_dpt(path, column=1):
+    """Load one column from a Bruker ``.dpt`` file (comma-separated text).
+
+    ``column=0`` gives the wavenumbers, ``column=1`` the values, and
+    ``column=None`` gives both as a 2-D array.
+    """
+    data = np.loadtxt(path, delimiter=",")
+    if column is None:
+        return data
+    return data[:, column]
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +103,7 @@ def load_series(folder):
     spectra = []
     wn = None
     for name in names:
-        both = ir.load_dpt(os.path.join(folder, name), column=None)
+        both = load_dpt(os.path.join(folder, name), column=None)
         if wn is None:
             wn = both[:, 0]
         spectra.append(both[:, 1])
@@ -309,7 +323,7 @@ def main():
 
 
 # ---------------------------------------------------------------------------
-# Self-tests -- run `python exercise11_kinetics.py` to grade yourself.
+# Self-tests -- run `python section_E_kinetics.py` to grade yourself.
 # Do not modify below this line.
 # ---------------------------------------------------------------------------
 def _report(name, ok, msg=""):
@@ -319,7 +333,7 @@ def _report(name, ok, msg=""):
 
 
 def _selftest():
-    print("Running exercise11 self-tests...\n")
+    print("Running Section E self-tests...\n")
     results = []
 
     # band_area: a triangle of known area sitting on a sloping baseline
@@ -415,4 +429,4 @@ if __name__ == "__main__":
         main()
     else:
         _selftest()
-        print("\nTo run the analysis on your own data:  python exercise11_kinetics.py run")
+        print("\nTo run the analysis on your own data:  python section_E_kinetics.py run")
