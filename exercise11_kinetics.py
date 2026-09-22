@@ -184,9 +184,10 @@ def fit_first_order(t, area):
 
     Hints
     -----
-    * ``m, b, se_m, se_b = unc.linregress_with_uncertainty(t, np.log(area))``.
-    * The slope is ``-k``, so ``k = -m`` and ``k_err = se_m``.
-    * ``area0 = exp(b)``.
+    * ``fit = unc.linregress_with_uncertainty(t, np.log(area))``.
+    * The slope is ``-k``, so ``k = -fit['slope']`` and
+      ``k_err = fit['slope_err']``.
+    * ``area0 = exp(fit['intercept'])``.
     * ``half_life = ln(2)/k``. Since it is inversely proportional to k, its
       RELATIVE uncertainty equals that of k: ``half_life_err =
       half_life * k_err / k``.
@@ -441,4 +442,10 @@ def _selftest():
 
 
 if __name__ == "__main__":
-    _selftest()
+    import sys
+
+    if "run" in sys.argv[1:]:
+        main()
+    else:
+        _selftest()
+        print("\nTo run the analysis on your own data:  python exercise11_kinetics.py run")

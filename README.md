@@ -38,6 +38,13 @@ self-tests each exercise passes. You do not need to run
 **Run `check.py` first, run it when you are stuck, and run it before you hand
 in.** It is a diagnostic tool — nothing it prints is graded.
 
+Every exercise then works the same way:
+
+```bash
+python exercise3_peaks.py        # grade yourself against its self-tests
+python exercise3_peaks.py run    # run the analysis on your data
+```
+
 > **The interactive bench page** — four in-browser instruments (interferometer
 > console, rovibrational simulator, normal-mode explorer, and a symmetry explorer
 > covering 34 molecules across 15 point groups) — lives at
@@ -137,10 +144,15 @@ A `.dpt` file is just comma-separated `wavenumber, value`.
 Do the files **in order** — later ones import earlier ones.
 
 ### `irtools.py` — build your toolkit *(start here)*
-The core FT-IR maths as seven small functions you implement yourself:
-`load_dpt`, `find_zero_burst`, `window_around`, `single_beam`,
-`wavenumber_axis`, `transmittance`, `absorbance`. Nothing downstream works until
-these pass, so get all six self-tests green before moving on.
+The core FT-IR maths as **six** small functions you implement yourself:
+`find_zero_burst`, `window_around`, `single_beam`, `wavenumber_axis`,
+`transmittance`, `absorbance`. Nothing downstream works until these pass, so
+get all five self-tests green before moving on.
+
+`load_dpt` is **written for you**. Reading a comma-separated file is Python
+housekeeping, not spectroscopy, and every exercise needs it before it can do
+anything at all, so it is not a useful place to get stuck. Read it, then start
+at `find_zero_burst`.
 
 ### 1. `exercise1_interferogram.py` — load and explore
 Read the files, find the zero burst, plot the interferograms, and reason about

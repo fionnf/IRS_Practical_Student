@@ -45,6 +45,11 @@ def load_dpt(path, column=1):
     absorbance files (``*_ab.dpt``) you will usually want BOTH columns, so
     make ``column`` selectable.
 
+    This one is WRITTEN FOR YOU. Reading a comma-separated file is Python
+    housekeeping, not spectroscopy, and every exercise needs it before it can
+    do anything at all. Read it, then move on to find_zero_burst below, which
+    is where the real work starts.
+
     Parameters
     ----------
     path : str
@@ -57,14 +62,11 @@ def load_dpt(path, column=1):
     -------
     numpy.ndarray
         1-D array (single column) or 2-D array (both columns).
-
-    Hints
-    -----
-    * ``np.loadtxt`` can read comma-separated files with ``delimiter=","``.
-    * Slicing a 2-D array: ``data[:, column]`` selects one column.
     """
-    # TODO: implement me
-    raise NotImplementedError("load_dpt: read the file and return the requested column(s)")
+    data = np.loadtxt(path, delimiter=",")
+    if column is None:
+        return data
+    return data[:, column]
 
 
 # ---------------------------------------------------------------------------
@@ -241,22 +243,6 @@ def _selftest():
     import tempfile, os
     print("Running irtools self-tests...\n")
     results = []
-
-    # load_dpt
-    try:
-        fd, p = tempfile.mkstemp(suffix=".dpt")
-        os.close(fd)
-        with open(p, "w") as f:
-            f.write("0.0,10.0\n1.0,20.0\n2.0,30.0\n")
-        col1 = load_dpt(p, column=1)
-        both = load_dpt(p, column=None)
-        ok = (np.allclose(col1, [10, 20, 30]) and np.asarray(both).shape == (3, 2))
-        results.append(_report("load_dpt", ok, "column selection wrong"))
-        os.remove(p)
-    except NotImplementedError:
-        results.append(_report("load_dpt", False, "not implemented"))
-    except Exception as e:  # noqa
-        results.append(_report("load_dpt", False, f"raised {e!r}"))
 
     # find_zero_burst
     try:

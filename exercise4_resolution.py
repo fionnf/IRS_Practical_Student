@@ -16,6 +16,17 @@ These are genuine numerical experiments: change one thing, look at the
 spectrum, and explain what you see.
 
 Run with:  python exercise4_resolution.py
+
+WHAT YOU DO IN THIS FILE
+------------------------
+Three short functions, then three numerical experiments that use them:
+
+    apodize(window, kind)      taper the window edges
+    zero_fill(window, factor)  pad with zeros
+    spectrum_from_window(...)  window -> spectrum, a thin wrapper
+
+    python exercise4_resolution.py        <- grade yourself
+    python exercise4_resolution.py run    <- run the experiments
 """
 
 import numpy as np
@@ -181,5 +192,70 @@ def main():
     print("Exercise 4 complete once experiments A-C run and Q1-Q4 are answered.")
 
 
+# ---------------------------------------------------------------------------
+# Self-tests -- run `python exercise4_resolution.py` to grade yourself.
+# Do not modify below this line.
+# ---------------------------------------------------------------------------
+def _report(name, ok, msg=""):
+    tick = "PASS" if ok else "FAIL"
+    print(f"[{tick}] {name}" + (f"  --  {msg}" if msg and not ok else ""))
+    return ok
+
+
+def _selftest():
+    print("Running exercise4 self-tests...\n")
+    results = []
+    # boxcar changes nothing; a taper removes energy from the edges
+    try:
+        w = np.ones(256)
+        box = apodize(w, "boxcar")
+        bla = apodize(w, "blackman")
+        ok = (np.allclose(box, w) and len(bla) == len(w)
+              and abs(bla[0]) < 1e-6 and bla.sum() < box.sum())
+        results.append(_report("apodize", ok, "boxcar must be a no-op, and blackman must taper the edges to ~0"))
+    except NotImplementedError:
+        results.append(_report("apodize", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("apodize", False, f"raised {e!r}"))
+
+    # zero-filling lengthens the window without touching the data
+    try:
+        w = np.arange(1.0, 65.0)
+        out = zero_fill(w, factor=4)
+        ok = (len(out) == 4 * len(w) and np.allclose(out[:len(w)], w)
+              and np.allclose(out[len(w):], 0.0))
+        results.append(_report("zero_fill", ok, "expected factor*N points, original data first, zeros after"))
+    except NotImplementedError:
+        results.append(_report("zero_fill", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("zero_fill", False, f"raised {e!r}"))
+
+    # the spectrum and its axis must be the same length
+    try:
+        w = np.zeros(512)
+        w[256] = 10.0
+        wn, spec = spectrum_from_window(w, 16716.51)
+        ok = (len(wn) == len(spec) == len(w) // 2)
+        results.append(_report("spectrum_from_window", ok, "wn and the spectrum should both be len(window)//2"))
+    except NotImplementedError:
+        results.append(_report("spectrum_from_window", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("spectrum_from_window", False, f"raised {e!r}"))
+
+
+    passed = sum(bool(r) for r in results)
+    print(f"\n{passed}/{len(results)} checks passed.")
+    if passed == len(results):
+        print("All good -- now run:  python exercise4_resolution.py run")
+    else:
+        print("Keep going: fix the FAIL items above, then re-run.")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if "run" in sys.argv[1:]:
+        main()
+    else:
+        _selftest()
+        print("\nTo run the analysis on your own data:  python exercise4_resolution.py run")

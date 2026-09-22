@@ -400,4 +400,10 @@ def _selftest():
 
 
 if __name__ == "__main__":
-    _selftest()
+    import sys
+
+    if "run" in sys.argv[1:]:
+        main()
+    else:
+        _selftest()
+        print("\nTo run the analysis on your own data:  python exercise10_normalmodes.py run")

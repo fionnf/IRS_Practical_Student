@@ -27,6 +27,17 @@ and your five (or more) mixture spectra from Section D, as ``.dpt`` files
 (wavenumber, absorbance).
 
 Run with:  python exercise6_mixture_unmixing.py
+
+WHAT YOU DO IN THIS FILE
+------------------------
+Three functions:
+
+    common_grid(...)           put two spectra on the same wavenumber axis
+    unmix(...)                 least squares for the mixing fractions
+    reconstruction_error(...)  how well the fit reproduces the mixture
+
+    python exercise6_mixture_unmixing.py        <- grade yourself
+    python exercise6_mixture_unmixing.py run    <- run it on your data
 """
 
 import numpy as np
@@ -194,5 +205,76 @@ def main():
     print("Exercise 6 complete once STEPs 1-5 run and Q1-Q5 are answered.")
 
 
+# ---------------------------------------------------------------------------
+# Self-tests -- run `python exercise6_mixture_unmixing.py` to grade yourself.
+# Do not modify below this line.
+# ---------------------------------------------------------------------------
+def _report(name, ok, msg=""):
+    tick = "PASS" if ok else "FAIL"
+    print(f"[{tick}] {name}" + (f"  --  {msg}" if msg and not ok else ""))
+    return ok
+
+
+def _selftest():
+    print("Running exercise6 self-tests...\n")
+    results = []
+    # both spectra must land on one shared axis
+    try:
+        wn_a = np.linspace(600, 1600, 900)
+        wn_b = np.linspace(650, 1550, 700)
+        a = np.exp(-((wn_a - 1000) / 40.0) ** 2)
+        b = np.exp(-((wn_b - 1300) / 40.0) ** 2)
+        wn, ai, bi = common_grid(wn_a, a, wn_b, b, wn_lo=700, wn_hi=1500, n=500)
+        ok = (len(wn) == len(ai) == len(bi) == 500
+              and np.all(np.diff(wn) > 0) and wn[0] >= 700 and wn[-1] <= 1500)
+        results.append(_report("common_grid", ok, "expected three arrays of length n, on an ascending axis"))
+    except NotImplementedError:
+        results.append(_report("common_grid", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("common_grid", False, f"raised {e!r}"))
+
+    # an exact mixture of two knowns must give its own coefficients back
+    try:
+        wn = np.linspace(600, 1600, 1000)
+        p1 = np.exp(-((wn - 900) / 30.0) ** 2)
+        p2 = np.exp(-((wn - 1300) / 30.0) ** 2)
+        x1, x2 = unmix(0.3 * p1 + 0.7 * p2, p1, p2)
+        ok = (abs(x1 - 0.3) < 1e-6 and abs(x2 - 0.7) < 1e-6)
+        results.append(_report("unmix", ok, "expected x1 = 0.3 and x2 = 0.7 for a mixture built that way"))
+    except NotImplementedError:
+        results.append(_report("unmix", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("unmix", False, f"raised {e!r}"))
+
+    # a perfect reconstruction has no error left over
+    try:
+        wn = np.linspace(600, 1600, 1000)
+        p1 = np.exp(-((wn - 900) / 30.0) ** 2)
+        p2 = np.exp(-((wn - 1300) / 30.0) ** 2)
+        mix = 0.3 * p1 + 0.7 * p2
+        exact = reconstruction_error(mix, p1, p2, 0.3, 0.7)
+        wrong = reconstruction_error(mix, p1, p2, 0.6, 0.4)
+        ok = (exact < 1e-9 and wrong > exact)
+        results.append(_report("reconstruction_error", ok, "should be ~0 for an exact fit, and grow when the fit is wrong"))
+    except NotImplementedError:
+        results.append(_report("reconstruction_error", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("reconstruction_error", False, f"raised {e!r}"))
+
+
+    passed = sum(bool(r) for r in results)
+    print(f"\n{passed}/{len(results)} checks passed.")
+    if passed == len(results):
+        print("All good -- now run:  python exercise6_mixture_unmixing.py run")
+    else:
+        print("Keep going: fix the FAIL items above, then re-run.")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if "run" in sys.argv[1:]:
+        main()
+    else:
+        _selftest()
+        print("\nTo run the analysis on your own data:  python exercise6_mixture_unmixing.py run")

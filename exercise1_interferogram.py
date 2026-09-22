@@ -25,6 +25,14 @@ What RIFG / SIFG / AB mean
          later check your own result against the "official" one.
 
 Run this file with:  python exercise1_interferogram.py
+
+WHAT YOU DO IN THIS FILE
+------------------------
+Nothing to implement here. Run it, look at the plots, and answer the
+questions. It exists so you see what an interferogram actually looks like
+before you start transforming one.
+
+    python exercise1_interferogram.py run
 """
 
 import numpy as np

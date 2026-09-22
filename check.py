@@ -28,14 +28,16 @@ import sys
 # Exercises in the order you should work through them. The second entry says
 # how the file reports progress: "selftest" files grade themselves, "report"
 # files are judged from the figures and answers in your write-up instead.
+# Almost everything grades itself now; exercise 1 has nothing to implement
+# and exercise 5 is optional, so those two are the only "report" entries.
 EXERCISES = [
     ("irtools.py", "selftest", "Your FT-IR toolkit -- everything else imports it"),
     ("exercise1_interferogram.py", "report", "Load and explore the interferograms"),
-    ("exercise2_spectrum.py", "report", "Interferogram to spectrum, validated"),
-    ("exercise3_peaks.py", "report", "Baseline, peak finding, assignment"),
-    ("exercise4_resolution.py", "report", "Resolution, apodization, zero-filling"),
+    ("exercise2_spectrum.py", "selftest", "Interferogram to spectrum, validated"),
+    ("exercise3_peaks.py", "selftest", "Baseline, peak finding, assignment"),
+    ("exercise4_resolution.py", "selftest", "Resolution, apodization, zero-filling"),
     ("exercise5_simulation.py", "report", "Simulate a spectrometer end to end"),
-    ("exercise6_mixture_unmixing.py", "report", "Least-squares mixture unmixing"),
+    ("exercise6_mixture_unmixing.py", "selftest", "Least-squares mixture unmixing"),
     ("exercise7_uncertainty.py", "selftest", "Uncertainty toolkit -- used everywhere"),
     ("exercise9_polymer_id.py", "selftest", "Library matching and ATR depth"),
     ("exercise10_normalmodes.py", "selftest", "GF-matrix normal modes"),
@@ -193,11 +195,13 @@ def main():
 
     rule("What to do next")
     if total and done == total:
-        print(f"  {GREEN}Every self-test passes.{OFF} Work through the main() section of\n"
-              "  each exercise, answer the embedded questions, and write them up.")
+        print(f"  {GREEN}Every self-test passes.{OFF} Now run each exercise on your own\n"
+              "  data, for example: python exercise3_peaks.py run\n"
+              "  Answer the questions in each file, and write them up.")
     else:
         print("  Open the first file above that is not yet complete and implement\n"
-              "  the functions marked with TODO. Re-run this check as you go.\n"
+              "  the functions marked with TODO. Grade just that one file by\n"
+              "  running it (python irtools.py), or re-run this check.\n"
               "  Work in order: later exercises import the earlier ones.")
     return 0
 

@@ -11,6 +11,17 @@ New tools you may use here: `scipy.signal.find_peaks`. Everything else builds
 on your own `irtools` + `compute_spectrum` from exercise 2.
 
 Run with:  python exercise3_peaks.py
+
+WHAT YOU DO IN THIS FILE
+------------------------
+Three short functions, in this order:
+
+    baseline_correct(wn, A)   flatten a sloping background
+    find_bands(wn, A)         locate the peaks
+    assign(peak_wn)           look each peak up in the correlation table
+
+    python exercise3_peaks.py        <- grade yourself
+    python exercise3_peaks.py run    <- run it on your data
 """
 
 import numpy as np
@@ -30,7 +41,7 @@ CORRELATION_TABLE = [
 ]
 
 
-def baseline_correct(A, wn):
+def baseline_correct(wn, A):
     """Remove a slowly-varying baseline from an absorbance spectrum.
 
     Real spectra drift up and down due to scattering, sloping backgrounds,
@@ -44,10 +55,14 @@ def baseline_correct(A, wn):
 
     Parameters
     ----------
-    A : ndarray
-        Absorbance spectrum.
     wn : ndarray
-        Matching wavenumber axis.
+        Wavenumber axis.
+    A : ndarray
+        Matching absorbance spectrum.
+
+    Every function in this practical that takes both a wavenumber axis and a
+    spectrum takes them in that order, ``(wn, A)``. Passing them the other way
+    round does not raise: it silently fits a baseline through nonsense.
 
     Returns
     -------
@@ -64,7 +79,7 @@ def baseline_correct(A, wn):
     raise NotImplementedError("baseline_correct: fit & subtract a low-order baseline")
 
 
-def find_bands(A, wn, height=None, distance=None):
+def find_bands(wn, A, height=None, distance=None):
     """Return the wavenumbers and heights of the absorbance peaks.
 
     Use ``scipy.signal.find_peaks``. You will need to choose sensible
@@ -114,7 +129,7 @@ def main():
     #   Q1. What artefacts in the raw absorbance did the baseline correction
     #       remove? Did it distort any real peaks?
     # -----------------------------------------------------------------
-    A_bc = baseline_correct(A, wn)
+    A_bc = baseline_correct(wn, A)
     # TODO: plot A and A_bc together.
 
     # -----------------------------------------------------------------
@@ -122,7 +137,7 @@ def main():
     #   Q2. How sensitive is the peak list to your `height`/`distance`
     #       choices? Give the values you settled on and why.
     # -----------------------------------------------------------------
-    peak_wn, peak_A = find_bands(A_bc, wn, height=None, distance=None)
+    peak_wn, peak_A = find_bands(wn, A_bc, height=None, distance=None)
     # TODO: plot A_bc and overlay the detected peaks (e.g. plt.scatter).
 
     # -----------------------------------------------------------------
@@ -148,5 +163,73 @@ def main():
     print("\nExercise 3 complete once the assignment table prints and Q1-Q4 are answered.")
 
 
+# ---------------------------------------------------------------------------
+# Self-tests -- run `python exercise3_peaks.py` to grade yourself.
+# Do not modify below this line.
+# ---------------------------------------------------------------------------
+def _report(name, ok, msg=""):
+    tick = "PASS" if ok else "FAIL"
+    print(f"[{tick}] {name}" + (f"  --  {msg}" if msg and not ok else ""))
+    return ok
+
+
+def _selftest():
+    print("Running exercise3 self-tests...\n")
+    results = []
+    # a peak on a sloping background: the background must go
+    try:
+        wn = np.linspace(600, 1800, 1201)
+        peak = np.exp(-((wn - 1700) / 12.0) ** 2)
+        A = peak + 0.4 + 3e-4 * (wn - 600)
+        out = baseline_correct(wn, A)
+        edge = (wn < 1400)
+        ok = abs(np.median(out[edge])) < 0.05
+        results.append(_report("baseline_correct", ok, "the flat parts should come back to about zero"))
+    except NotImplementedError:
+        results.append(_report("baseline_correct", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("baseline_correct", False, f"raised {e!r}"))
+
+    # two well-separated bands must both be found
+    try:
+        wn = np.linspace(600, 1800, 1201)
+        A = (np.exp(-((wn - 1700) / 12.0) ** 2)
+             + 0.8 * np.exp(-((wn - 1100) / 12.0) ** 2))
+        peak_wn, peak_A = find_bands(wn, A, height=0.3, distance=10)
+        found = np.sort(np.asarray(peak_wn))
+        ok = (len(found) == 2
+              and abs(found[0] - 1100) < 10 and abs(found[1] - 1700) < 10)
+        results.append(_report("find_bands", ok, "expected peaks near 1100 and 1700 cm^-1"))
+    except NotImplementedError:
+        results.append(_report("find_bands", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("find_bands", False, f"raised {e!r}"))
+
+    # assign returns one entry per peak, each with a list of labels
+    try:
+        out = assign(np.array([1700.0, 1100.0]))
+        ok = (len(out) == 2
+              and all(len(row) == 2 and isinstance(row[1], list) for row in out))
+        results.append(_report("assign", ok, "expected one (wavenumber, [labels]) pair per input peak"))
+    except NotImplementedError:
+        results.append(_report("assign", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("assign", False, f"raised {e!r}"))
+
+
+    passed = sum(bool(r) for r in results)
+    print(f"\n{passed}/{len(results)} checks passed.")
+    if passed == len(results):
+        print("All good -- now run:  python exercise3_peaks.py run")
+    else:
+        print("Keep going: fix the FAIL items above, then re-run.")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if "run" in sys.argv[1:]:
+        main()
+    else:
+        _selftest()
+        print("\nTo run the analysis on your own data:  python exercise3_peaks.py run")

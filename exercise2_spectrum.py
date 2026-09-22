@@ -12,6 +12,15 @@ This is the heart of FT-IR. You already wrote every tool you need in
 `irtools.py`; here you wire them together into the full pipeline.
 
 Run with:  python exercise2_spectrum.py
+
+WHAT YOU DO IN THIS FILE
+------------------------
+One function: compute_spectrum. It chains together the irtools pieces you
+already wrote into the full route from two interferograms to a transmittance
+spectrum. If irtools passes its self-test, this is mostly plumbing.
+
+    python exercise2_spectrum.py        <- grade yourself
+    python exercise2_spectrum.py run    <- run it on your data
 """
 
 import numpy as np
@@ -112,5 +121,61 @@ def main():
     print("Exercise 2 complete once the pipeline runs and Q1-Q4 are answered.")
 
 
+# ---------------------------------------------------------------------------
+# Self-tests -- run `python exercise2_spectrum.py` to grade yourself.
+# Do not modify below this line.
+# ---------------------------------------------------------------------------
+def _report(name, ok, msg=""):
+    tick = "PASS" if ok else "FAIL"
+    print(f"[{tick}] {name}" + (f"  --  {msg}" if msg and not ok else ""))
+    return ok
+
+
+def _selftest():
+    print("Running exercise2 self-tests...\n")
+    results = []
+    # identical reference and sample must give T = 1 everywhere
+    try:
+        rng = np.random.default_rng(0)
+        N = 1024
+        ifg = np.zeros(4096)
+        ifg[2048] = 50.0
+        ifg += rng.normal(0, 1e-3, ifg.shape)
+        wn, T = compute_spectrum(ifg, ifg.copy(), N, 16716.51)
+        ok = np.allclose(T, 1.0, atol=1e-9)
+        results.append(_report("compute_spectrum (T = 1 for an empty sample)", ok, "dividing a beam by itself must give transmittance 1"))
+    except NotImplementedError:
+        results.append(_report("compute_spectrum (T = 1 for an empty sample)", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("compute_spectrum (T = 1 for an empty sample)", False, f"raised {e!r}"))
+
+    # the axis must be half the window length
+    try:
+        N = 1024
+        ifg = np.zeros(4096)
+        ifg[2048] = 50.0
+        wn, T = compute_spectrum(ifg, ifg.copy(), N, 16716.51)
+        ok = (len(wn) == N // 2 and len(T) == N // 2)
+        results.append(_report("compute_spectrum (array lengths)", ok, "wn and T should both have N//2 points"))
+    except NotImplementedError:
+        results.append(_report("compute_spectrum (array lengths)", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("compute_spectrum (array lengths)", False, f"raised {e!r}"))
+
+
+    passed = sum(bool(r) for r in results)
+    print(f"\n{passed}/{len(results)} checks passed.")
+    if passed == len(results):
+        print("All good -- now run:  python exercise2_spectrum.py run")
+    else:
+        print("Keep going: fix the FAIL items above, then re-run.")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if "run" in sys.argv[1:]:
+        main()
+    else:
+        _selftest()
+        print("\nTo run the analysis on your own data:  python exercise2_spectrum.py run")
