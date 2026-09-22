@@ -28,18 +28,20 @@ import sys
 # Exercises in the order you should work through them. The second entry says
 # how the file reports progress: "selftest" files grade themselves, "report"
 # files are judged from the figures and answers in your write-up instead.
+# Almost everything grades itself now; exercise 1 has nothing to implement
+# and exercise 5 is optional, so those two are the only "report" entries.
 EXERCISES = [
     ("irtools.py", "selftest", "Your FT-IR toolkit -- everything else imports it"),
     ("exercise1_interferogram.py", "report", "Load and explore the interferograms"),
-    ("exercise2_spectrum.py", "report", "Interferogram to spectrum, validated"),
-    ("exercise3_peaks.py", "report", "Baseline, peak finding, assignment"),
-    ("exercise4_resolution.py", "report", "Resolution, apodization, zero-filling"),
+    ("exercise2_spectrum.py", "selftest", "Interferogram to spectrum, validated"),
+    ("exercise3_peaks.py", "selftest", "Baseline, peak finding, assignment"),
+    ("exercise4_resolution.py", "selftest", "Resolution, apodization, zero-filling"),
     ("exercise5_simulation.py", "report", "Simulate a spectrometer end to end"),
-    ("exercise6_mixture_unmixing.py", "report", "Least-squares mixture unmixing"),
+    ("exercise6_mixture_unmixing.py", "selftest", "Least-squares mixture unmixing"),
     ("exercise7_uncertainty.py", "selftest", "Uncertainty toolkit -- used everywhere"),
-    ("exercise8_rovibrational.py", "report", "HCl rovibrational constants"),
     ("exercise9_polymer_id.py", "selftest", "Library matching and ATR depth"),
     ("exercise10_normalmodes.py", "selftest", "GF-matrix normal modes"),
+    ("exercise11_kinetics.py", "selftest", "Real-time kinetics on the ATR"),
 ]
 
 REQUIRED_PACKAGES = ["numpy", "scipy", "matplotlib"]
@@ -48,7 +50,7 @@ REQUIRED_PACKAGES = ["numpy", "scipy", "matplotlib"]
 DATA_GROUPS = [
     ("background_rifg.dpt", "interferograms (exercises 1-4)"),
     ("ethanol_ab.dpt", "reference absorbance to validate against (exercise 2)"),
-    ("hcl_gas_ab.dpt", "HCl gas-phase spectrum (exercise 8)"),
+    ("kinetics_298K/times.csv", "time-resolved kinetics run (exercise 11)"),
     ("polymer_ref_PE.dpt", "polymer library (exercise 9)"),
 ]
 
@@ -106,13 +108,30 @@ def check_data():
         print(f"  [{mark}] {fname:<28} {DIM}{why}{OFF}")
 
     if missing:
-        print(
-            f"\n  {YELLOW}Some practice data is missing.{OFF} Generate all of it with:\n"
-            f"\n      {BOLD}python generate_demo_data.py{OFF}\n\n"
-            "  You only need this until you have your own measurements --\n"
-            "  once you do, drop your .dpt files in this folder and use those."
-        )
-    return not missing
+        # Generating it is one import away, so do that rather than printing a
+        # command and making the student run a second thing.
+        print(f"\n  {YELLOW}Some practice data is missing. Generating it now...{OFF}\n")
+        try:
+            import generate_demo_data
+            generate_demo_data.main()
+        except Exception as exc:
+            print(
+                f"\n  {RED}Could not generate the practice data: {exc}{OFF}\n"
+                f"  Try running it yourself:  {BOLD}{sys.executable} "
+                f"generate_demo_data.py{OFF}"
+            )
+            return False
+        still_missing = [f for f, _ in DATA_GROUPS if not os.path.exists(f)]
+        if still_missing:
+            print(f"\n  {RED}Still missing: {', '.join(still_missing)}{OFF}")
+            return False
+        print(f"\n  {GREEN}Done.{OFF} Practice data is ready.")
+    print(
+        "\n  This is practice data, for learning the analysis before your lab\n"
+        "  slot. Once you have your own measurements, drop your .dpt files in\n"
+        "  this folder and the exercises will use those instead."
+    )
+    return True
 
 
 def run_selftest(filename):
@@ -176,11 +195,13 @@ def main():
 
     rule("What to do next")
     if total and done == total:
-        print(f"  {GREEN}Every self-test passes.{OFF} Work through the main() section of\n"
-              "  each exercise, answer the embedded questions, and write them up.")
+        print(f"  {GREEN}Every self-test passes.{OFF} Now run each exercise on your own\n"
+              "  data, for example: python exercise3_peaks.py run\n"
+              "  Answer the questions in each file, and write them up.")
     else:
         print("  Open the first file above that is not yet complete and implement\n"
-              "  the functions marked with TODO. Re-run this check as you go.\n"
+              "  the functions marked with TODO. Grade just that one file by\n"
+              "  running it (python irtools.py), or re-run this check.\n"
               "  Work in order: later exercises import the earlier ones.")
     return 0
 

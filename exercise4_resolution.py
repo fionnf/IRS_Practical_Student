@@ -16,6 +16,29 @@ These are genuine numerical experiments: change one thing, look at the
 spectrum, and explain what you see.
 
 Run with:  python exercise4_resolution.py
+
+WHAT YOU DO IN THIS FILE
+------------------------
+Three short functions, then three numerical experiments that use them:
+
+    apodize(window, kind)      taper the window edges
+    zero_fill(window, factor)  pad with zeros
+    spectrum_from_window(...)  window -> spectrum, a thin wrapper
+
+    python exercise4_resolution.py        <- grade yourself
+    python exercise4_resolution.py run    <- run the experiments
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section A, Q4, Q5 and Q6
+
+    Experiment A, window length  ->  Section A Q4
+    Experiment B, apodization    ->  Section A Q5
+    Experiment C, zero-filling   ->  Section A Q6
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import numpy as np
@@ -115,9 +138,9 @@ def main():
     # transmittance each time and overlay the spectra (zoom into a region with
     # close peaks, e.g. 2800-3050 cm^-1).
     #
-    #   Q1. As N increases, what happens to the linewidths and to your ability
+    #   - As N increases, what happens to the linewidths and to your ability
     #       to separate neighbouring bands?
-    #   Q2. FT-IR resolution (cm^-1) is roughly 1 / (max optical path
+    #   - FT-IR resolution (cm^-1) is roughly 1 / (max optical path
     #       difference). Explain qualitatively why a longer window = better
     #       resolution, in terms of how far the mirror travels.
     # -----------------------------------------------------------------
@@ -144,7 +167,7 @@ def main():
     # Fix N (say 2**12). For each kind in ["boxcar","triangular","hann",
     # "blackman"]: apodize BOTH windows, compute transmittance, overlay.
     #
-    #   Q3. Which apodization gives the sharpest peaks? Which gives the least
+    #   - Which apodization gives the sharpest peaks? Which gives the least
     #       ringing (fewest negative side-lobes around strong bands)? Describe
     #       the trade-off in one sentence.
     # -----------------------------------------------------------------
@@ -171,15 +194,81 @@ def main():
     # spectrum with no zero-fill and with factor=4, and overlay them on a
     # narrow zoom. Use markers ('o-') so you can see individual points.
     #
-    #   Q4. Zero-filling makes the curve look smoother. Did it actually improve
+    #   - Zero-filling makes the curve look smoother. Did it actually improve
     #       the true RESOLUTION (your ability to separate two real peaks), or
     #       only the sampling of the curve? Justify using what you saw in
     #       Experiment A.
     # -----------------------------------------------------------------
     # TODO: implement the zero-fill comparison
 
-    print("Exercise 4 complete once experiments A-C run and Q1-Q4 are answered.")
+    print("\nDone once experiments A-C run and you have answered\n"
+          "Section A Q4, Q5 and Q6 in the manual.")
+
+
+# ---------------------------------------------------------------------------
+# Self-tests -- run `python exercise4_resolution.py` to grade yourself.
+# Do not modify below this line.
+# ---------------------------------------------------------------------------
+def _report(name, ok, msg=""):
+    tick = "PASS" if ok else "FAIL"
+    print(f"[{tick}] {name}" + (f"  --  {msg}" if msg and not ok else ""))
+    return ok
+
+
+def _selftest():
+    print("Running exercise4 self-tests...\n")
+    results = []
+    # boxcar changes nothing; a taper removes energy from the edges
+    try:
+        w = np.ones(256)
+        box = apodize(w, "boxcar")
+        bla = apodize(w, "blackman")
+        ok = (np.allclose(box, w) and len(bla) == len(w)
+              and abs(bla[0]) < 1e-6 and bla.sum() < box.sum())
+        results.append(_report("apodize", ok, "boxcar must be a no-op, and blackman must taper the edges to ~0"))
+    except NotImplementedError:
+        results.append(_report("apodize", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("apodize", False, f"raised {e!r}"))
+
+    # zero-filling lengthens the window without touching the data
+    try:
+        w = np.arange(1.0, 65.0)
+        out = zero_fill(w, factor=4)
+        ok = (len(out) == 4 * len(w) and np.allclose(out[:len(w)], w)
+              and np.allclose(out[len(w):], 0.0))
+        results.append(_report("zero_fill", ok, "expected factor*N points, original data first, zeros after"))
+    except NotImplementedError:
+        results.append(_report("zero_fill", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("zero_fill", False, f"raised {e!r}"))
+
+    # the spectrum and its axis must be the same length
+    try:
+        w = np.zeros(512)
+        w[256] = 10.0
+        wn, spec = spectrum_from_window(w, 16716.51)
+        ok = (len(wn) == len(spec) == len(w) // 2)
+        results.append(_report("spectrum_from_window", ok, "wn and the spectrum should both be len(window)//2"))
+    except NotImplementedError:
+        results.append(_report("spectrum_from_window", False, "not implemented"))
+    except Exception as e:
+        results.append(_report("spectrum_from_window", False, f"raised {e!r}"))
+
+
+    passed = sum(bool(r) for r in results)
+    print(f"\n{passed}/{len(results)} checks passed.")
+    if passed == len(results):
+        print("All good -- now run:  python exercise4_resolution.py run")
+    else:
+        print("Keep going: fix the FAIL items above, then re-run.")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if "run" in sys.argv[1:]:
+        main()
+    else:
+        _selftest()
+        print("\nTo run the analysis on your own data:  python exercise4_resolution.py run")

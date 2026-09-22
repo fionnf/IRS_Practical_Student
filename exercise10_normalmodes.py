@@ -52,6 +52,19 @@ polarizability changing in real time, which is worth five minutes of your
 attention before you start.
 
 Run with:  python exercise10_normalmodes.py
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section F, Q1 to Q4
+
+    STEP 1, k_r from nu1, then predict nu3  ->  Section F Q1 and Q2
+    STEP 2, fit both force constants        ->  Section F Q3
+    STEP 3-4, eigenvectors and the bend     ->  Section F Q4
+    STEP 5, CO2                             ->  an extension, not assessed
+
+The manual's question numbers are the only ones that count. This file used to
+carry its own Q1, Q2, Q3 that meant something different from the manual's, so
+those are now plain bullets under each step.
 """
 
 import numpy as np
@@ -235,10 +248,10 @@ def main():
     # predict the antisymmetric stretch. This is exactly what Section F Q1/Q2
     # asked you to do by hand -- now verify it with the matrix machinery.
     #
-    #   Q1. Report your k_r and your predicted nu3. Confirm the matrix result
+    #   - Report your k_r and your predicted nu3. Confirm the matrix result
     #       agrees with the closed form you used in Section F (they must, or
     #       one of them is wrong -- this is a genuine check on your algebra).
-    #   Q2. What is the % error against the measured nu3, and in which
+    #   - What is the % error against the measured nu3, and in which
     #       direction? Does the sign of the error tell you anything about
     #       whether k_rr should be positive or negative?
     # -----------------------------------------------------------------
@@ -251,11 +264,11 @@ def main():
     # -----------------------------------------------------------------
     # STEP 2 -- Fix it: fit BOTH constants.
     #
-    #   Q3. Report k_r and k_rr from `fit_force_constants`. Express k_rr as a
+    #   - Report k_r and k_rr from `fit_force_constants`. Express k_rr as a
     #       percentage of k_r. Feed both back into f_matrix/solve_modes and
     #       confirm you now reproduce BOTH measured frequencies (to within
     #       round-off).
-    #   Q4. Is k_rr small compared with k_r? What does its SIGN mean
+    #   - Is k_rr small compared with k_r? What does its SIGN mean
     #       physically -- when one C=S bond stretches, does the other become
     #       easier or harder to stretch? Propose a bonding rationale (think
     #       about how the shared central carbon's orbitals are being used).
@@ -266,13 +279,13 @@ def main():
     # -----------------------------------------------------------------
     # STEP 3 -- Look at the eigenvectors.
     #
-    #   Q5. Print the eigenvector for each stretching mode and classify it
+    #   - Print the eigenvector for each stretching mode and classify it
     #       with `classify_mode`. For the SYMMETRIC mode, argue from the
     #       eigenvector (not from a memorised rule) that the molecular dipole
     #       moment does not change during the vibration -- and therefore that
     #       the mode is IR-INACTIVE. Then argue that the molecular
     #       polarizability DOES change, making it Raman-active.
-    #   Q6. Do the same for the ANTISYMMETRIC mode and show it comes out the
+    #   - Do the same for the ANTISYMMETRIC mode and show it comes out the
     #       other way round. You have now DERIVED the mutual exclusion rule
     #       for this molecule rather than quoting it.
     # -----------------------------------------------------------------
@@ -281,7 +294,7 @@ def main():
     # -----------------------------------------------------------------
     # STEP 4 -- The bend.
     #
-    #   Q7. Invert `bend_wavenumber` to find the k_delta that reproduces your
+    #   - Invert `bend_wavenumber` to find the k_delta that reproduces your
     #       measured nu2. Bending constants are usually quoted in
     #       mdyn*Angstrom/rad^2 (1 mdyn*A/rad^2 = 1e-18 N*m/rad^2). Is your
     #       value in the typical 0.1-1 range? A bending force constant is much
@@ -293,22 +306,22 @@ def main():
     # -----------------------------------------------------------------
     # STEP 5 (challenge) -- A different molecule.
     #
-    #   Q8. CO2 is also a linear symmetric XY2 (nu1 = 1333, nu3 = 2349 cm^-1
+    #   - CO2 is also a linear symmetric XY2 (nu1 = 1333, nu3 = 2349 cm^-1
     #       -- note nu1 is Raman-only, exactly as for CS2). Repeat STEP 2 for
     #       CO2 using M_O for the terminal mass. Compare k_r(CO2) with
     #       k_r(CS2). Which molecule has the stiffer bond, and is that what
     #       you would predict from bond order and atom size? Compare k_rr/k_r
     #       for the two molecules as well.
-    #   Q9. Why can neither molecule's symmetric stretch be seen in the IR,
+    #   - Why can neither molecule's symmetric stretch be seen in the IR,
     #       no matter how concentrated your sample is? Contrast this with a
     #       BENT XY2 such as water (nu1 = 3657 cm^-1, which IS IR-active) --
     #       what does the change in geometry do to the argument you made in
-    #       Q5?
+    #       Section F Q5?
     # -----------------------------------------------------------------
     # TODO: repeat for CO2
 
-    print("Exercise 10 complete once STEPs 1-4 run and Q1-Q7 are answered "
-          "(Q8-Q9 for the challenge).")
+    print("\nDone once STEPs 1-4 run and you have answered\n"
+          "Section F Q1 to Q4 in the manual. STEP 5 is an extension.")
 
 
 # ---------------------------------------------------------------------------
@@ -394,10 +407,16 @@ def _selftest():
     passed = sum(bool(r) for r in results)
     print(f"\n{passed}/{len(results)} checks passed.")
     if passed == len(results):
-        print("All good -- now work through main() and answer Q1-Q9.")
+        print("All good -- now run this on your data and answer Section F Q1 to Q4.")
     else:
         print("Keep going: fix the FAIL items above, then re-run.")
 
 
 if __name__ == "__main__":
-    _selftest()
+    import sys
+
+    if "run" in sys.argv[1:]:
+        main()
+    else:
+        _selftest()
+        print("\nTo run the analysis on your own data:  python exercise10_normalmodes.py run")

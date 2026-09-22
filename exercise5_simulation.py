@@ -28,6 +28,12 @@ You will implement the modelling functions; the driver at the bottom runs the
 experiments and asks the questions.
 
 Run with:  python exercise5_simulation.py
+
+THIS FILE IS OPTIONAL
+---------------------
+No section of the manual assigns it, and nothing in it is assessed. It is kept
+because it is the clearest way to see the whole pipeline run backwards. Its
+questions are its own; they are not the manual's numbered questions.
 """
 
 import numpy as np
@@ -364,7 +370,8 @@ def main():
     #     grow or shrink? Connect this to what you found in Part D, Q4, about
     #     what makes a good quantitation band.
 
-    print("Exercise 5 complete once Parts A-F run and Q1-Q8 are answered.")
+    print("\nDone once Parts A-F run. This file is OPTIONAL and is not\n"
+          "assessed: no section of the manual assigns it.")
 
 
 if __name__ == "__main__":

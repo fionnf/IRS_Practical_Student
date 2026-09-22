@@ -25,6 +25,19 @@ You will use these functions in your OWN reports wherever you report a
 number with real experimental data behind it -- not just in this file.
 
 Run with:  python exercise7_uncertainty.py
+
+WHICH QUESTIONS THIS ANSWERS
+----------------------------
+Section A, Q10, Q11 and Q12 directly. After that it is used, rather than
+answered, nearly everywhere else.
+
+    confidence_interval_95        ->  Section A Q11 and Q12
+    linregress_with_uncertainty   ->  Section A Q10; Section B Q1; Section D Q6
+    propagate_product / _power    ->  Section A Q10; Section E Q3
+    welch_t_test                  ->  Section A Q10 and Q12
+
+Every physical quantity you quote anywhere in the report needs an uncertainty
+from this file, so finish it early: Sections B, D, E, G and H all lean on it.
 """
 
 import numpy as np
@@ -140,10 +153,11 @@ def linregress_with_uncertainty(x, y):
 
     Returns
     -------
-    m, b : float
-        Best-fit slope and intercept.
-    se_m, se_b : float
-        Standard errors (1-sigma) on the slope and intercept.
+    dict
+        With keys ``slope``, ``intercept``, ``slope_err`` and
+        ``intercept_err``. A dict rather than a tuple because four unlabelled
+        numbers in a row are easy to unpack in the wrong order, and every
+        later exercise calls this.
 
     Method
     ------
@@ -151,8 +165,10 @@ def linregress_with_uncertainty(x, y):
     2. Compute residuals ``resid = y - (m*x + b)``.
     3. Residual variance ``s2 = sum(resid**2) / (n - 2)`` (n-2 because two
        parameters, m and b, were fit from the data).
-    4. ``se_m = sqrt(s2 / sum((x - mean(x))**2))``
-    5. ``se_b = se_m * sqrt(sum(x**2) / n)``
+    4. ``slope_err = sqrt(s2 / sum((x - mean(x))**2))``
+    5. ``intercept_err = slope_err * sqrt(sum(x**2) / n)``
+    6. Return them as
+       ``{'slope': m, 'intercept': b, 'slope_err': ..., 'intercept_err': ...}``.
 
     These are the standard OLS formulas (the same ones behind
     ``scipy.stats.linregress``, which you may use to CHECK your answer, but
@@ -182,17 +198,24 @@ def welch_t_test(mean1, sem1, n1, mean2, sem2, n2):
 
     Returns
     -------
-    t_stat : float
-        (mean1 - mean2) / sqrt(sem1**2 + sem2**2)
-    rule_of_thumb : str
-        "likely real difference" if |t_stat| > 2, else "consistent with
-        noise" -- a quick, honest rule of thumb (a proper p-value needs the
-        Welch-Satterthwaite degrees of freedom, which is out of scope here;
-        |t| > ~2 is a good approximate 95% threshold for reasonable n).
+    dict
+        With keys ``t`` and ``verdict``. ``t`` is
+        ``(mean1 - mean2) / sqrt(sem1**2 + sem2**2)``. ``verdict`` is
+        ``"likely real difference"`` when ``abs(t) > 2`` and
+        ``"consistent with noise"`` otherwise -- a quick, honest rule of
+        thumb. A proper p-value needs the Welch-Satterthwaite degrees of
+        freedom, which is out of scope here; |t| > ~2 is a good approximate
+        95% threshold for reasonable n.
+
+    Quote the NUMBER in your report, not just the verdict. The verdict is
+    there to stop a borderline t being written up as though it settled the
+    question.
 
     Hints
     -----
-    * t_stat = (mean1 - mean2) / sqrt(sem1**2 + sem2**2)
+    * ``t = (mean1 - mean2) / sqrt(sem1**2 + sem2**2)``
+    * Return both in one dict, so a caller cannot use the verdict while
+      silently ignoring the number.
     """
     # TODO: implement
     raise NotImplementedError("welch_t_test")
@@ -249,7 +272,9 @@ def _selftest():
         x = np.linspace(0, 10, 20)
         y_true = 2.5 * x + 1.0
         y = y_true + rng.normal(0, 0.3, size=x.shape)
-        m, b, se_m, se_b = linregress_with_uncertainty(x, y)
+        fit = linregress_with_uncertainty(x, y)
+        m, b, se_m, se_b = (fit["slope"], fit["intercept"],
+                            fit["slope_err"], fit["intercept_err"])
         try:
             from scipy import stats
             ref = stats.linregress(x, y)
@@ -264,10 +289,14 @@ def _selftest():
         results.append(_report("linregress_with_uncertainty", False, f"raised {e!r}"))
 
     try:
-        t1 = welch_t_test(10.0, 0.5, 3, 10.1, 0.5, 3)
-        t2 = welch_t_test(10.0, 0.1, 3, 15.0, 0.1, 3)
+        r1 = welch_t_test(10.0, 0.5, 3, 10.1, 0.5, 3)
+        r2 = welch_t_test(10.0, 0.1, 3, 15.0, 0.1, 3)
+        t1, t2 = r1["t"], r2["t"]
+        verdicts_ok = (r1["verdict"] == "consistent with noise"
+                       and r2["verdict"] == "likely real difference")
         ok = (abs(t1) < 2) and (abs(t2) > 2)
-        results.append(_report("welch_t_test", ok, "check formula and threshold logic"))
+        results.append(_report("welch_t_test", ok and verdicts_ok,
+                               "check the formula, and that verdict follows |t| > 2"))
     except NotImplementedError:
         results.append(_report("welch_t_test", False, "not implemented"))
     except Exception as e:

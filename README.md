@@ -21,25 +21,29 @@ file is a skeleton: docstrings and hints tell you *what* each piece must do, and
 
 ## Quick start
 
-Four commands. If you are in a hurry, this is the whole setup.
+Four commands, and the last one sets itself up. If you are in a hurry, this is everything.
 
 ```bash
 git clone https://github.com/fionnf/IRS_Practical.git
 cd IRS_Practical
 pip install -r requirements.txt
-python generate_demo_data.py
-```
-
-Then, whenever you want to know where you stand:
-
-```bash
 python check.py
 ```
 
-`check.py` verifies your Python and packages, confirms the practice data is
-present, and shows how many self-tests each exercise passes. **Run it first, run
-it when you are stuck, and run it before you hand in.** It is a diagnostic tool —
-nothing it prints is graded.
+That is the whole setup. `check.py` verifies your Python and packages,
+**generates the practice data for you if it is missing**, and shows how many
+self-tests each exercise passes. You do not need to run
+`generate_demo_data.py` yourself.
+
+**Run `check.py` first, run it when you are stuck, and run it before you hand
+in.** It is a diagnostic tool — nothing it prints is graded.
+
+Every exercise then works the same way:
+
+```bash
+python exercise3_peaks.py        # grade yourself against its self-tests
+python exercise3_peaks.py run    # run the analysis on your data
+```
 
 > **The interactive bench page** — four in-browser instruments (interferometer
 > console, rovibrational simulator, normal-mode explorer, and a symmetry explorer
@@ -104,14 +108,14 @@ Just `numpy`, `scipy` and `matplotlib`.
 
 ### 5. Get data
 
-```bash
-python generate_demo_data.py
-```
+Nothing to do. `python check.py` writes practice data for **every** exercise
+the first time it finds it missing, so you can work through the whole practical
+before your lab slot. (`python generate_demo_data.py` regenerates it, if you
+ever want that.)
 
-This writes practice data for **every** exercise, so you can work through the
-whole practical before your lab slot. When you have your own measurements, drop
-the real `.dpt` files into the folder and use those — the practice data is for
-learning the analysis, not for your report.
+When you have your own measurements, drop the real `.dpt` files into the folder
+and use those — the practice data is for learning the analysis, not for your
+report.
 
 ---
 
@@ -124,8 +128,8 @@ learning the analysis, not for your report.
 | `*_ab.dpt` | **AB**sorbance spectrum the instrument computed — both columns |
 | `polymer_ref_*.dpt` | Reference library for identification (exercise 9) |
 | `polymer_unknown_*.dpt` | Two unknowns. One is not what it first appears to be. |
-| `hcl_gas_ab.dpt` | HCl gas-phase rovibrational spectrum (exercise 8) |
-| `hcl_gas_highres_ab.dpt` | Same, sharp enough to resolve the Cl-35/Cl-37 doublet — for the advanced isotope question only |
+| `kinetics_298K/` | A whole time-resolved run: one spectrum per time point, plus `times.csv` (exercise 11) |
+| `kinetics_308K/` | The same reaction run warmer — for the activation energy |
 
 A `.dpt` file is just comma-separated `wavenumber, value`.
 
@@ -157,10 +161,15 @@ are already there.
 Do the files **in order** — later ones import earlier ones.
 
 ### `irtools.py` — build your toolkit *(start here)*
-The core FT-IR maths as seven small functions you implement yourself:
-`load_dpt`, `find_zero_burst`, `window_around`, `single_beam`,
-`wavenumber_axis`, `transmittance`, `absorbance`. Nothing downstream works until
-these pass, so get all six self-tests green before moving on.
+The core FT-IR maths as **six** small functions you implement yourself:
+`find_zero_burst`, `window_around`, `single_beam`, `wavenumber_axis`,
+`transmittance`, `absorbance`. Nothing downstream works until these pass, so
+get all five self-tests green before moving on.
+
+`load_dpt` is **written for you**. Reading a comma-separated file is Python
+housekeeping, not spectroscopy, and every exercise needs it before it can do
+anything at all, so it is not a useful place to get stuck. Read it, then start
+at `find_zero_burst`.
 
 ### 1. `exercise1_interferogram.py` — load and explore
 Read the files, find the zero burst, plot the interferograms, and reason about
@@ -201,13 +210,6 @@ intervals (Student's *t*, not a bare standard deviation), propagation through
 products and powers, regression with standard errors, and a two-sample *t*-test.
 Every number you quote in your report should come with an uncertainty from here.
 
-### 8. `exercise8_rovibrational.py` — bond lengths from a gas spectrum
-Assign P and R branch lines with a running index `m`, then fit
-`ν(m) = ν₀ + 2Bₑm − 4Dₑm³` by multiple regression — including **centrifugal
-distortion**, not just the rigid rotor — to get `ν₀`, `Bₑ`, `Dₑ` and a bond length
-with a real error bar. On the practice data you should land within about 0.1 pm
-of the literature 127.5 pm.
-
 ### 9. `exercise9_polymer_id.py` — how library matching really works
 Implement the **hit quality index** that commercial identification software
 computes internally (cosine similarity of baseline-removed, normalised spectra),
@@ -221,6 +223,24 @@ frequencies *and* eigenvectors, then invert the problem to extract both force
 constants from your measured spectrum — resolving the ~7% discrepancy the manual
 deliberately leaves hanging as a real stretch–stretch interaction constant rather
 than experimental error.
+
+### 11. `exercise11_kinetics.py` -- watch a reaction happen
+Follow the hydrolysis of acetic anhydride on the ATR in real time. Five short
+functions: load a whole folder of spectra with its time axis, integrate a band
+above a local baseline, do that at every time point, fit the first-order decay
+for `k` and a half-life with real uncertainties, and locate the **isosbestic
+point** that proves one reactant is going cleanly to one product. Then the
+honest part: log-linearising over-weights the noisy late points, so refit
+without them and report how far `k` moves.
+
+### 11. `exercise11_kinetics.py` — watch a reaction happen
+Follow the hydrolysis of acetic anhydride on the ATR in real time. Five short
+functions: load a whole folder of spectra with its time axis, integrate a band
+above a local baseline, do that at every time point, fit the first-order decay
+for `k` and a half-life with real uncertainties, and locate the **isosbestic
+point** that shows one reactant going cleanly to one product. Then the honest
+part: log-linearising over-weights the noisy late points, so refit without them
+and report how far `k` moves.
 
 > `dft_example.R` is an optional R version of the core workflow, provided as-is.
 > Teaching assistants support **Python** only.
@@ -236,7 +256,7 @@ than experimental error.
 | B — The Case of Deniz O'Sullivan | `exercise3`, `exercise7` | your own |
 | C — The Afterparty (polymers) | `exercise9_polymer_id.py` | `polymer_ref_*`, `polymer_unknown_*` |
 | D — Excess spectra of ideal mixtures | `exercise6_mixture_unmixing.py` | your own |
-| E — Rovibrational spectra of gases | `exercise8_rovibrational.py` | `hcl_gas_ab.dpt` |
+| E — Hydrolysis of acetic anhydride | `exercise11_kinetics.py` | `kinetics_298K/`, `kinetics_308K/` |
 | F — Raman and IR of CS₂ | `exercise10_normalmodes.py` | your own |
 | G — The O–H band as a probe | `exercise3`, `exercise7` | your own |
 | H — H/D exchange | `exercise3`, `exercise7` | your own |
@@ -288,17 +308,14 @@ the key figures. A good report:
 - reports **every** physical constant anywhere in your write-up — force
   constants, concentrations, mole fractions, bond lengths — as a value with a
   propagated uncertainty (7);
-- shows the P/R branch assignment, the 2- versus 3-parameter regression
-  comparison, and the HCl-versus-DCl bond length consistency check (8);
 - gives the **full ranked hit list** for each polymer unknown, not just the
   winner, plus the residual re-search that reveals the laminate, and says what
   that means for trusting a single top-hit percentage (9);
 - reports both CS₂ force constants from the GF-matrix inversion and states
   whether `k_rr` accounts for the discrepancy the manual leaves open (10);
 - shows the time series with the isosbestic point marked, the first-order fit
-  with `k ± σ_k` and a half-life, the residual plot and the `order_test`
-  comparison, plus an honest note on how much `k` moves when the noise-dominated
-  late points are dropped (11).
+  with `k ± σ_k` and a half-life, the residual plot, plus an honest note on
+  how much `k` moves when the noise-dominated late points are dropped (11).
 
 ---
 
@@ -309,12 +326,12 @@ the key figures. A good report:
 | Symptom | Cause and fix |
 |---|---|
 | `ModuleNotFoundError` | Packages not installed, or your editor uses a different interpreter than your terminal. Compare against the path `check.py` prints. |
-| `FileNotFoundError` for a `.dpt` | Run `python generate_demo_data.py`, or put your real files in the project folder. |
+| `FileNotFoundError` for a `.dpt` | Run `python check.py`, which regenerates the practice data, or put your real files in the project folder. |
 | `NotImplementedError` | Expected — that function is still yours to write. |
 | Spectrum looks like noise | Check you windowed around the zero burst of the *reference* and used the **same** centre for sample and reference. |
 | Spectrum shifted along x | Your wavenumber axis should have exactly `N//2` points. |
 | Peaks at the wrong wavenumbers | You are probably plotting against array index rather than the wavenumber axis. |
-| Exercise 8 gives a nonsense bond length (~2× too long) | You used `hcl_gas_highres_ab.dpt`. Its resolved Cl-35/Cl-37 doublet interleaves two line progressions; use `hcl_gas_ab.dpt` unless you are doing the advanced isotope question. |
+| Exercise 11 finds an "isosbestic point" out in the flat baseline | You searched the whole spectrum. Every spectrum agrees where nothing is happening; restrict the search to between the falling band and the rising one. |
 
 Remember the IR convention: plot wavenumber **decreasing** left to right
 (`plt.xlim(4000, 500)`).
